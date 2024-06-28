@@ -20,6 +20,7 @@ openai==1.33.0
 orjson==3.10.3
 pydantic==2.7.3
 pydantic_core==2.18.4
+pydantic-settings==2.3.4
 Pygments==2.18.0
 python-dotenv==1.0.1
 python-multipart==0.0.9
