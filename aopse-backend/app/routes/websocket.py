@@ -4,7 +4,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 import json
 
-from app.models import EventType, ChatResponse, WebSocketMessage, Message
+from app.models import EventType, ClientMessage, AIResponseStatus, ServerResponse, WebSocketMessage
 from app.services.ai_service import AIService
 
 router = APIRouter()
@@ -22,9 +22,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 data = await websocket.receive_text()
                 event = WebSocketMessage.parse_raw(data)
 
-                if event.event == EventType.SEND_MESSAGE:
-                    if not isinstance(event.data, Message):
-                        raise ValidationError("Invalid data type for SEND_MESSAGE event")
+                if event.event == EventType.CLIENT_MESSAGE:
+                    if not isinstance(event.data, ClientMessage):
+                        raise ValidationError("Invalid data type for CLIENT_MESSAGE event")
 
                     message = event.data
 
@@ -37,7 +37,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     stream_task = asyncio.create_task(stream_response(websocket, ai_service, message.content))
 
-                elif event.event == EventType.ABORT:
+                elif event.event == EventType.CLIENT_ABORT:
                     if stream_task:
                         stream_task.cancel()
                         try:
@@ -45,25 +45,25 @@ async def websocket_endpoint(websocket: WebSocket):
                         except asyncio.CancelledError:
                             pass
                     await websocket.send_text(WebSocketMessage(
-                        event=EventType.ABORT,
-                        data=ChatResponse(message="Stream aborted")
+                        event=EventType.SERVER_ABORT,
+                        data=ServerResponse(status=AIResponseStatus.aborted, content="aborted by client")
                     ).json())
 
                 else:
                     await websocket.send_text(WebSocketMessage(
-                        event=EventType.UNKNOWN_EVENT,
-                        data=ChatResponse(message="Unknown event type")
+                        event=EventType.SERVER_ERROR,
+                        data=ServerResponse(content="Invalid event type")
                     ).json())
 
             except json.JSONDecodeError:
                 await websocket.send_text(WebSocketMessage(
-                    event=EventType.SYNTAX_ERROR,
-                    data=ChatResponse(message="Invalid JSON")
+                    event=EventType.SERVER_ERROR,
+                    data=ServerResponse(content="Invalid JSON")
                 ).json())
             except ValidationError as e:
                 await websocket.send_text(WebSocketMessage(
-                    event=EventType.SYNTAX_ERROR,
-                    data=ChatResponse(message=f"Invalid message structure: {str(e)}")
+                    event=EventType.SERVER_ERROR,
+                    data=ServerResponse(content=str(e))
                 ).json())
 
     except WebSocketDisconnect:
@@ -76,10 +76,15 @@ async def stream_response(websocket: WebSocket, ai_service: AIService, content: 
     try:
         async for chunk in ai_service.stream_response(content):
             response_event = WebSocketMessage(
-                event=EventType.RECEIVE_RESPONSE,
-                data=ChatResponse(message=chunk)
+                event=EventType.SERVER_AI_RESPONSE,
+                data=ServerResponse(content=chunk, status=AIResponseStatus.streaming)
             )
             await websocket.send_text(response_event.json())
+
+        response_event = WebSocketMessage(
+            event=EventType.SERVER_AI_RESPONSE,
+            data=ServerResponse(content="", status=AIResponseStatus.completed)
+        )
+        await websocket.send_text(response_event.json())
     except asyncio.CancelledError:
-        # TODO: Handle cancellation if needed
         pass
