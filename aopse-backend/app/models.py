@@ -3,21 +3,28 @@ from enum import Enum
 
 
 class EventType(str, Enum):
-    SEND_MESSAGE = "send_message"
-    RECEIVE_RESPONSE = "receive_response"
-    ABORT = "abort"
-    SYNTAX_ERROR = "syntax_error"
-    UNKNOWN_EVENT = "unknown_event"
+    CLIENT_MESSAGE = "client_message"
+    CLIENT_ABORT = "client_abort"
+    SERVER_AI_RESPONSE = "server_ai_response"
+    SERVER_ABORT = "server_abort"
+    SERVER_ERROR = "server_error"
 
 
-class Message(BaseModel):
+class ClientMessage(BaseModel):
     content: str
 
 
-class ChatResponse(BaseModel):
-    message: str
+class AIResponseStatus(str, Enum):
+    streaming = "streaming"
+    completed = "completed"
+    aborted = "aborted"
+
+
+class ServerResponse(BaseModel):
+    status: AIResponseStatus | None = None
+    content: str
 
 
 class WebSocketMessage(BaseModel):
     event: EventType
-    data: Message | ChatResponse | None = None
+    data: ClientMessage | ServerResponse | None = None
