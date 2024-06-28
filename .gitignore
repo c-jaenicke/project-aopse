@@ -92,6 +92,7 @@ vite.config.js.timestamp-*
 /documentation/types.js
 .env
 .venv/
+venv/
 bin/
 .vercel_build_output
 .svelte-kit
