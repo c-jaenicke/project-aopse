@@ -103,7 +103,7 @@ bin/
 .test-tmp
 symlink-from
 .idea/
-
+*.yaml
 
 ##################################################
 # ide files
