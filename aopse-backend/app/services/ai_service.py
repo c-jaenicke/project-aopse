@@ -1,5 +1,7 @@
+import asyncio
 from openai import OpenAI
 from app.config import settings
+
 
 class AIService:
     def __init__(self):
@@ -11,6 +13,11 @@ class AIService:
             messages=[{"role": "user", "content": message}],
             stream=True,
         )
-        for chunk in stream:
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
+        try:
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content
+                await asyncio.sleep(0)  # TODO: check if this works as intended
+        except asyncio.CancelledError:
+            stream.close()
+            raise
