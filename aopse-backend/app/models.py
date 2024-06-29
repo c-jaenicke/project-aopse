@@ -5,12 +5,15 @@ from enum import Enum
 class EventType(str, Enum):
     CLIENT_MESSAGE = "client_message"
     CLIENT_ABORT = "client_abort"
+    CLIENT_INITIATE_THREAD = "client_initiate_thread"
     SERVER_AI_RESPONSE = "server_ai_response"
+    SERVER_SEND_THREAD = "server_send_thread"
     SERVER_ABORT = "server_abort"
     SERVER_ERROR = "server_error"
 
 
 class ClientMessage(BaseModel):
+    thread_id: str
     content: str
 
 
