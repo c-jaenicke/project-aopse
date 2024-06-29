@@ -69,7 +69,7 @@ async def websocket_endpoint(websocket: WebSocket):
         pass
     except RuntimeError as e:
         if str(e) == "Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response already completed.":
-            # dont know why this happens sometimes, so just ignore it for now, TODO: debug
+            # dont know why this happens sometimes, so just ignore it for now, doesnt seem to happen with a ws client, only in the frontend, TODO: debug
             pass
         else:
             raise
@@ -78,7 +78,7 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.close()
         except RuntimeError as e:
             if str(e) == "Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response already completed.":
-                # dont know why this happens sometimes, so just ignore it for now, TODO: debug
+                # dont know why this happens sometimes, so just ignore it for now, doesnt seem to happen with a ws client, only in the frontend, TODO: debug
                 pass
             else:
                 raise
