@@ -1,15 +1,14 @@
 import asyncio
-
 from fastapi import WebSocket
 from openai import OpenAI
 from openai.lib.streaming import AssistantEventHandler
-
-from app.config import config, save_config
+from app.config import config, ConfigSingleton
 from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus
 
 
 class AIService:
     def __init__(self):
+        self.config = ConfigSingleton.get_instance()
         self.client = OpenAI(api_key=config.aopse.providers["openai"].api_key)
         self.assistant_id = config.aopse.providers["openai"].assistant_id
         self.assistant = None
@@ -91,7 +90,7 @@ class AIService:
         self.assistant_id = self.assistant.id
         # put assistant_id in config file
         config.aopse.providers["openai"].assistant_id = self.assistant_id
-        save_config(config)
+        ConfigSingleton.save_config(config)
         return self.assistant
 
     def create_thread(self):
