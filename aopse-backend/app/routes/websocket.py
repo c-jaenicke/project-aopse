@@ -32,7 +32,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         raise ValidationError("Invalid data type for CLIENT_MESSAGE event")
 
                     message = event.data
-                    asyncio.create_task(
+                    await asyncio.create_task(
                         run_in_executor(ai_service.stream_response, message.thread_id, message.content, websocket)
                     )
                 elif event.event == EventType.CLIENT_ABORT:
@@ -68,7 +68,8 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
     except RuntimeError as e:
-        if str(e) == "Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response already completed":
+        if str(e) == "Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response already completed.":
+            # dont know why this happens sometimes, so just ignore it for now, TODO: debug
             pass
         else:
             raise
@@ -76,7 +77,8 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             await websocket.close()
         except RuntimeError as e:
-            if str(e) == "Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response already completed":
+            if str(e) == "Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response already completed.":
+                # dont know why this happens sometimes, so just ignore it for now, TODO: debug
                 pass
             else:
                 raise
