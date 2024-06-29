@@ -4,6 +4,7 @@ from fastapi import WebSocket
 from openai import OpenAI
 from openai.lib.streaming import AssistantEventHandler
 from openai.types.beta import AssistantStreamEvent
+from openai.types.beta.threads.runs import ToolCall, ToolCallDelta
 
 from app.config import ConfigSingleton
 from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus
@@ -32,6 +33,12 @@ class AIService:
                 self.callback(event.data.id, event_type="created")
             if event.event == "thread.run.cancelled":
                 self.callback("Run cancelled", event_type="cancelled")
+
+        def on_tool_call_created(self, tool_call: ToolCall):
+            print(f"Tool call created: {tool_call}")
+
+        def on_tool_call_delta(self, delta: ToolCallDelta, snapshot: ToolCall):
+            print(f"Tool call delta: {delta}")
 
     def stream_response(self, thread_id: str, message: str, websocket: WebSocket):
         valid_thread = self.check_thread_exists(thread_id)
@@ -70,23 +77,6 @@ class AIService:
             with self.client.beta.threads.runs.create_and_stream(
                     thread_id=thread_id,
                     assistant_id=self.assistant_id,
-                    instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users 
-                    assess and improve their online privacy and security.
-
-                    Your main tasks are: 1. Scan public databases to identify potential vulnerabilities, data leaks, 
-                    and other risks associated with a user's online presence. 2. Provide personalized recommendations 
-                    to remediate issues and strengthen privacy and security, such as: - Guidance on creating strong 
-                    passwords - Advice on enabling two-factor authentication (2FA) - Suggestions for removing old or 
-                    unused online accounts - Other best practices for online privacy and security 3. Empower users to 
-                    protect their digital footprint by offering actionable insights and easy-to-follow steps.
-
-                    When responding to user queries, ensure that your answers are: - Clear, concise, and easy to 
-                    understand - Tailored to the user's specific situation and needs - Focused on practical solutions 
-                    and actionable advice - Encouraging and supportive, helping users feel empowered to take control 
-                    of their online privacy and security
-
-                    Remember, your goal is to be a trusted resource for users seeking to safeguard their digital 
-                    presence. Always prioritize their privacy, security, and well-being in your interactions.""",
                     event_handler=self.EventHandler(text_callback, thread_id),
             ) as stream:
                 stream.until_done()
@@ -139,6 +129,25 @@ class AIService:
                         "security, such as guidance on strong passwords, 2FA, removing old accounts, and other best "
                         "practices.",
             model="gpt-3.5-turbo",
+            instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users 
+                            assess and improve their online privacy and security.
+
+                            Your main tasks are: 1. Scan public databases to identify potential vulnerabilities, data leaks, 
+                            and other risks associated with a user's online presence. 2. Provide personalized recommendations 
+                            to remediate issues and strengthen privacy and security, such as: - Guidance on creating strong 
+                            passwords - Advice on enabling two-factor authentication (2FA) - Suggestions for removing old or 
+                            unused online accounts - Other best practices for online privacy and security 3. Empower users to 
+                            protect their digital footprint by offering actionable insights and easy-to-follow steps.
+
+                            When responding to user queries, ensure that your answers are: - Clear, concise, and easy to 
+                            understand - Tailored to the user's specific situation and needs - Focused on practical solutions 
+                            and actionable advice - Encouraging and supportive, helping users feel empowered to take control 
+                            of their online privacy and security
+
+                            Remember, your goal is to be a trusted resource for users seeking to safeguard their digital 
+                            presence. Always prioritize their privacy, security, and well-being in your interactions.""",
+            tools=[{"type": "code_interpreter"}],
+
         )
         self.assistant_id = self.assistant.id
         # put assistant_id in config file
