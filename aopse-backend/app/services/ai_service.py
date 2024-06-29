@@ -24,6 +24,15 @@ class AIService:
             self.callback(delta.value)
 
     def stream_response(self, thread_id: str, message: str, websocket: WebSocket):
+        valid_thread = self.check_thread_exists(thread_id)
+        if not valid_thread:
+            response_event = WebSocketMessage(
+                event=EventType.SERVER_ERROR,
+                data=ServerResponse(content="Invalid thread ID", status=AIResponseStatus.aborted)
+            )
+            asyncio.run(websocket.send_text(response_event.json()))
+            return
+
         message = self.client.beta.threads.messages.create(
             thread_id=thread_id,
             role="user",
@@ -79,6 +88,14 @@ class AIService:
                 return True
         except Exception as e:
             raise ValueError(f"Assistant ID {self.assistant_id} is invalid: {e}")
+
+    def check_thread_exists(self, thread_id: str):
+        try:
+            thread = self.client.beta.threads.retrieve(thread_id)
+            if thread is not None:
+                return True
+        except Exception as e:
+            raise ValueError(f"Thread ID {thread_id} is invalid: {e}")
 
     def create_assistant(self):
         self.assistant = self.client.beta.assistants.create(
