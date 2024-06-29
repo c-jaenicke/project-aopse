@@ -68,8 +68,10 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
     except RuntimeError as e:
-        if str(e) == "Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response already completed.":
-            # dont know why this happens sometimes, so just ignore it for now, doesnt seem to happen with a ws client, only in the frontend, TODO: debug
+        if str(e) == ("Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response already "
+                      "completed."):
+            # dont know why this happens sometimes, so just ignore it for now, doesnt seem to happen with a ws
+            # client, only in the frontend, TODO: debug
             pass
         else:
             raise
@@ -77,8 +79,10 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             await websocket.close()
         except RuntimeError as e:
-            if str(e) == "Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response already completed.":
-                # dont know why this happens sometimes, so just ignore it for now, doesnt seem to happen with a ws client, only in the frontend, TODO: debug
+            if str(e) == ("Unexpected ASGI message 'websocket.close', after sending 'websocket.close' or response "
+                          "already completed."):
+                # dont know why this happens sometimes, so just ignore it for now, doesnt seem to happen with a ws
+                # client, only in the frontend, TODO: debug
                 pass
             else:
                 raise
@@ -87,21 +91,3 @@ async def websocket_endpoint(websocket: WebSocket):
 async def run_in_executor(func, *args):
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, func, *args)
-
-
-async def stream_response(websocket: WebSocket, ai_service: AIService, thread_id: str, content: str):
-    try:
-        async for chunk in ai_service.stream_response(thread_id, content):
-            response_event = WebSocketMessage(
-                event=EventType.SERVER_AI_RESPONSE,
-                data=ServerResponse(content=chunk, status=AIResponseStatus.streaming)
-            )
-            await websocket.send_text(response_event.json())
-
-        response_event = WebSocketMessage(
-            event=EventType.SERVER_AI_RESPONSE,
-            data=ServerResponse(content="", status=AIResponseStatus.completed)
-        )
-        await websocket.send_text(response_event.json())
-    except asyncio.CancelledError:
-        pass
