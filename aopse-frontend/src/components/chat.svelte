@@ -1,27 +1,24 @@
 <script lang="ts">
-import { onMount, afterUpdate } from 'svelte';
-import { chatStore } from '../stores/chatStore.js';
+  import { onMount, afterUpdate } from 'svelte';
+  import { chatStore, isLoading } from '../stores/chatStore.js';
 
-let currentMessage = '';
-let messageContainer: HTMLElement;
-let isLoading = false;
+  let currentMessage = '';
+  let messageContainer: HTMLElement;
 
-chatStore.isLoading.subscribe(value => isLoading = value);
+  function scrollToBottom() {
+      console.log('i received isloading as', $isLoading)
+      messageContainer?.scrollTo({ top: messageContainer.scrollHeight, behavior: 'smooth' });
+  }
 
-function scrollToBottom() {
-    messageContainer?.scrollTo({ top: messageContainer.scrollHeight, behavior: 'smooth' });
-}
+  onMount(scrollToBottom);
+  afterUpdate(scrollToBottom);
 
-onMount(scrollToBottom);
-afterUpdate(scrollToBottom);
-
-function handleSendMessage() {
-    if (!isLoading) {
-        chatStore.sendMessage(currentMessage);
-        currentMessage = '';
-    }
-}
-
+  function handleSendMessage() {
+      if (!$isLoading) {
+          chatStore.sendMessage(currentMessage);
+          currentMessage = '';
+      }
+  }
 </script>
 
 <div class="card bg-surface-100 dark:bg-gray-800 flex flex-col h-[calc(100vh-4rem)]">
@@ -47,15 +44,15 @@ function handleSendMessage() {
                 type="text"
                 placeholder="Type a message..."
                 class="input"
-                on:keydown={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
-                disabled={isLoading}
+                on:keydown={(e) => e.key === 'Enter' && !$isLoading && handleSendMessage()}
+                disabled={$isLoading}
             />
             <button
                     type="button"
-                    class={`btn ${isLoading ? 'variant-filled-error' : 'variant-filled-primary'}`}
-                    on:click={isLoading ? chatStore.stopResponse : handleSendMessage}
+                    class={`btn ${$isLoading ? 'variant-filled-error' : 'variant-filled-primary'}`}
+                    on:click={$isLoading ? chatStore.stopResponse : handleSendMessage}
             >
-                <span>{isLoading ? 'Stop' : 'Send'}</span>
+                <span>{$isLoading ? 'Stop' : 'Send'}</span>
             </button>
         </div>
     </footer>

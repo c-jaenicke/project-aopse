@@ -1,77 +1,89 @@
-import { writable, get } from 'svelte/store';
+// chatStore.js
+import {get, writable} from 'svelte/store';
+
+export const isLoading = writable(false);
 
 function createChatStore() {
     const chatMessages = writable([]);
-    const isLoading = writable(false);
-    let abortController: AbortController | null = null;
+    let socket: WebSocket | null = null;
+
+    function connectWebSocket() {
+        socket = new WebSocket('ws://localhost:8000/ws/chat');
+
+        socket.onopen = () => {
+            console.log('WebSocket connected');
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.event === 'server_ai_response') {
+                chatMessages.update(messages => {
+                    const lastMessage = messages[messages.length - 1];
+                    if (lastMessage.sender === 'ai') {
+                        lastMessage.text += data.data.content;
+                        if (data.data.status === 'streaming') {
+                            isLoading.set(true);
+                           lastMessage.isLoading = true;
+                        } else if (data.data.status === 'completed') {
+                            isLoading.set(false);
+                            lastMessage.isLoading = false;
+                        }
+                        console.log('Is loading:', get(isLoading));
+                    }
+                    return messages;
+                });
+            }
+        };
+
+        socket.onclose = () => {
+            console.log('WebSocket disconnected');
+            setTimeout(connectWebSocket, 5000);
+        };
+    }
+
+    connectWebSocket();
 
     async function sendMessage(currentMessage: string) {
-        if (currentMessage.trim() !== '' && !get(isLoading)) {
+        if (currentMessage.trim() !== '' && !get(isLoading) && socket && socket.readyState === WebSocket.OPEN) {
             chatMessages.update(messages => [...messages, { text: currentMessage, sender: 'user' }]);
             chatMessages.update(messages => [...messages, { text: '', sender: 'ai', isLoading: true }]);
             isLoading.set(true);
-            abortController = new AbortController();
-
+            console.log('Is loading:', get(isLoading));
             try {
-                // Simulated LLM API response
-                for (let i = 0; i < 5; i++) {
-                    await new Promise((resolve, reject) => {
-                        const timeout = setTimeout(() => {
-                            chatMessages.update(messages => {
-                                const lastMessage = messages[messages.length - 1];
-                                if (lastMessage.sender === 'ai') {
-                                    lastMessage.text += `AI response part ${i + 1}. `;
-                                    lastMessage.isLoading = i < 4;
-                                    return messages;
-                                }
-                                return messages;
-                            });
-                            resolve(null);
-                        }, 1000);
-
-                        abortController.signal.addEventListener('abort', () => {
-                            clearTimeout(timeout);
-                            reject(new Error('Aborted'));
-                        });
-                    });
-                }
+                socket.send(JSON.stringify({
+                    event: 'client_message',
+                    data: { thread_id: "thread_eilRlSu64KfgZlyoF6ANhLi5", content: currentMessage }
+                }));
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    chatMessages.update(messages => {
-                        const lastMessage = messages[messages.length - 1];
-                        if (lastMessage.sender === 'ai') {
-                            lastMessage.text += ' (Response stopped)';
-                            lastMessage.isLoading = false;
-                        }
-                        return messages;
-                    });
-                } else {
-                    console.error('Error in AI response:', error);
-                }
+                console.error('Error sending message:', error);
+                chatMessages.update(messages => {
+                    const lastMessage = messages[messages.length - 1];
+                    if (lastMessage.sender === 'ai') {
+                        lastMessage.text = 'Error: Failed to send message';
+                        lastMessage.isLoading = false;
+                    }
+                    return messages;
+                });
             } finally {
-                if (abortController) {
-                    isLoading.set(false);
-                    abortController = null;
-                }
+                //do nothing
             }
         }
     }
 
     function stopResponse() {
-        if (abortController) {
-            abortController.abort();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ event: 'abort' }));
             chatMessages.update(messages => {
                 const lastMessage = messages[messages.length - 1];
                 if (lastMessage.sender === 'ai') {
                     lastMessage.isLoading = false;
+                    lastMessage.text += ' (Response stopped)';
                 }
                 return messages;
             });
             isLoading.set(false);
-            abortController = null;
         }
     }
-
 
     return {
         subscribe: chatMessages.subscribe,
