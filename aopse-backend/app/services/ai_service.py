@@ -25,7 +25,7 @@ class AIService:
         def on_text_delta(self, delta, snapshot):
             self.callback(delta.value)
 
-    def stream_response(self, thread_id: str, message: str, websocket: WebSocket):  # Add websocket as an argument
+    def stream_response(self, thread_id: str, message: str, websocket: WebSocket):
         message = self.client.beta.threads.messages.create(
             thread_id=thread_id,
             role="user",
@@ -37,12 +37,30 @@ class AIService:
                 event=EventType.SERVER_AI_RESPONSE,
                 data=ServerResponse(content=text, status=AIResponseStatus.streaming)
             )
-            asyncio.run(websocket.send_text(response_event.json()))  # Use the websocket argument
+            asyncio.run(websocket.send_text(response_event.json()))
 
         try:
             with self.client.beta.threads.runs.create_and_stream(
                     thread_id=thread_id,
                     assistant_id=self.assistant_id,
+                    instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users assess and improve their online privacy and security.
+
+                    Your main tasks are:
+                    1. Scan public databases to identify potential vulnerabilities, data leaks, and other risks associated with a user's online presence.
+                    2. Provide personalized recommendations to remediate issues and strengthen privacy and security, such as:
+                       - Guidance on creating strong passwords
+                       - Advice on enabling two-factor authentication (2FA)
+                       - Suggestions for removing old or unused online accounts
+                       - Other best practices for online privacy and security
+                    3. Empower users to protect their digital footprint by offering actionable insights and easy-to-follow steps.
+
+                    When responding to user queries, ensure that your answers are:
+                    - Clear, concise, and easy to understand
+                    - Tailored to the user's specific situation and needs
+                    - Focused on practical solutions and actionable advice
+                    - Encouraging and supportive, helping users feel empowered to take control of their online privacy and security
+
+                    Remember, your goal is to be a trusted resource for users seeking to safeguard their digital presence. Always prioritize their privacy, security, and well-being in your interactions.""",
                     event_handler=self.EventHandler(text_callback, thread_id),
             ) as stream:
                 stream.until_done()
@@ -51,7 +69,7 @@ class AIService:
                 event=EventType.SERVER_AI_RESPONSE,
                 data=ServerResponse(content="", status=AIResponseStatus.completed)
             )
-            asyncio.run(websocket.send_text(response_event.json()))  # Use the websocket argument
+            asyncio.run(websocket.send_text(response_event.json()))
         except Exception as e:
             print(f"Error in stream_response: {e}")
 
