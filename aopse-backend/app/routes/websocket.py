@@ -36,12 +36,8 @@ async def websocket_endpoint(websocket: WebSocket):
                         run_in_executor(ai_service.stream_response, message.thread_id, message.content, websocket)
                     )
                 elif event.event == EventType.CLIENT_ABORT:
-                    await websocket.send_text(
-                        WebSocketMessage(
-                            event=EventType.SERVER_ABORT,
-                            data=ServerResponse(status=AIResponseStatus.aborted, content="aborted by client")
-                        ).json()
-                    )
+                    message = event.data
+                    success = await asyncio.create_task(ai_service.cancel_current_run(message.thread_id))
                 else:
                     await websocket.send_text(
                         WebSocketMessage(

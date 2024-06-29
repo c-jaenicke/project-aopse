@@ -14,7 +14,7 @@ class EventType(str, Enum):
 
 class ClientMessage(BaseModel):
     thread_id: str
-    content: str
+    content: str | None = None
 
 
 class AIResponseStatus(str, Enum):

@@ -1,7 +1,10 @@
 import asyncio
+
 from fastapi import WebSocket
 from openai import OpenAI
 from openai.lib.streaming import AssistantEventHandler
+from openai.types.beta import AssistantStreamEvent
+
 from app.config import ConfigSingleton
 from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus
 
@@ -13,6 +16,7 @@ class AIService:
         self.assistant_id = self.config.aopse.providers["openai"].assistant_id
         self.assistant = None
         self.check_assistant_exists()
+        self.current_run_id = None
 
     class EventHandler(AssistantEventHandler):
         def __init__(self, callback, thread_id):
@@ -22,6 +26,12 @@ class AIService:
 
         def on_text_delta(self, delta, snapshot):
             self.callback(delta.value)
+
+        def on_event(self, event: AssistantStreamEvent) -> None:
+            if event.event == "thread.run.created":
+                self.callback(event.data.id, event_type="created")
+            if event.event == "thread.run.cancelled":
+                self.callback("Run cancelled", event_type="cancelled")
 
     def stream_response(self, thread_id: str, message: str, websocket: WebSocket):
         valid_thread = self.check_thread_exists(thread_id)
@@ -39,12 +49,22 @@ class AIService:
             content=message,
         )
 
-        def text_callback(text):
-            response_event = WebSocketMessage(
-                event=EventType.SERVER_AI_RESPONSE,
-                data=ServerResponse(content=text, status=AIResponseStatus.streaming)
-            )
-            asyncio.run(websocket.send_text(response_event.json()))
+        def text_callback(text, event_type=None):
+            if event_type == "created":
+                print(f"Run created: {text}")
+                self.current_run_id = text
+            elif event_type == "cancelled":
+                response_event = WebSocketMessage(
+                    event=EventType.SERVER_AI_RESPONSE,
+                    data=ServerResponse(content=text, status=AIResponseStatus.aborted)
+                )
+                asyncio.run(websocket.send_text(response_event.json()))
+            else:
+                response_event = WebSocketMessage(
+                    event=EventType.SERVER_AI_RESPONSE,
+                    data=ServerResponse(content=text, status=AIResponseStatus.streaming)
+                )
+                asyncio.run(websocket.send_text(response_event.json()))
 
         try:
             with self.client.beta.threads.runs.create_and_stream(
@@ -78,6 +98,18 @@ class AIService:
             asyncio.run(websocket.send_text(response_event.json()))
         except Exception as e:
             print(f"Error in stream_response: {e}")
+
+    async def cancel_current_run(self, thread_id: str):
+        if self.current_run_id is not None:
+            try:
+                success = self.client.beta.threads.runs.cancel(run_id=self.current_run_id, thread_id=thread_id)
+                print(f"Cancelled run: {success}")
+                if success:
+                    self.current_run_id = None
+                    return True
+            except Exception as e:
+                print(f"Error cancelling run: {e}")
+        return False
 
     def check_assistant_exists(self):
         if self.assistant_id is None or self.assistant_id == "":
