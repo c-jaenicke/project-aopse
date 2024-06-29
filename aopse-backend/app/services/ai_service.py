@@ -84,7 +84,12 @@ class AIService:
     def create_assistant(self):
         self.assistant = self.client.beta.assistants.create(
             name="AOPSE Assistant",
-            description="AOPSE (AI OSINT People Search Engine) is an AI tool that helps users assess and improve online privacy and security. It scans public databases to identify potential vulnerabilities, data leaks, and other risks associated with a user's online presence. AOPSE provides personalized recommendations to remediate issues and strengthen privacy and security, such as guidance on strong passwords, 2FA, removing old accounts, and other best practices. AOPSE empowers users to protect their digital footprint.",
+            description="AOPSE (AI OSINT People Search Engine) is an AI tool that helps users assess and improve "
+                        "online privacy and security. It scans public databases to identify potential "
+                        "vulnerabilities, data leaks, and other risks associated with a user's online presence. AOPSE "
+                        "provides personalized recommendations to remediate issues and strengthen privacy and "
+                        "security, such as guidance on strong passwords, 2FA, removing old accounts, and other best "
+                        "practices.",
             model="gpt-3.5-turbo",
         )
         self.assistant_id = self.assistant.id
