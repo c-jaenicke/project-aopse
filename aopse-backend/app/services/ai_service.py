@@ -1,12 +1,11 @@
 import asyncio
-from typing import AsyncGenerator
+
+from fastapi import WebSocket
 from openai import OpenAI
 from openai.lib.streaming import AssistantEventHandler
 
 from app.config import config, save_config
 from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus
-
-from fastapi import WebSocket
 
 
 class AIService:
