@@ -1,6 +1,12 @@
 import asyncio
+from typing import AsyncGenerator
 from openai import OpenAI
+from openai.lib.streaming import AssistantEventHandler
+
 from app.config import config, save_config
+from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus
+
+from fastapi import WebSocket
 
 
 class AIService:
@@ -10,20 +16,44 @@ class AIService:
         self.assistant = None
         self.check_assistant_exists()
 
-    async def stream_response(self, message: str):
-        stream = self.client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": message}],
-            stream=True,
+    class EventHandler(AssistantEventHandler):
+        def __init__(self, callback, thread_id):
+            super().__init__()
+            self.thread_id = thread_id
+            self.callback = callback
+
+        def on_text_delta(self, delta, snapshot):
+            self.callback(delta.value)
+
+    def stream_response(self, thread_id: str, message: str, websocket: WebSocket):  # Add websocket as an argument
+        message = self.client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=message,
         )
+
+        def text_callback(text):
+            response_event = WebSocketMessage(
+                event=EventType.SERVER_AI_RESPONSE,
+                data=ServerResponse(content=text, status=AIResponseStatus.streaming)
+            )
+            asyncio.run(websocket.send_text(response_event.json()))  # Use the websocket argument
+
         try:
-            for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    yield chunk.choices[0].delta.content
-                await asyncio.sleep(0)  # TODO: check if this works as intended
-        except asyncio.CancelledError:
-            stream.close()
-            raise
+            with self.client.beta.threads.runs.create_and_stream(
+                    thread_id=thread_id,
+                    assistant_id=self.assistant_id,
+                    event_handler=self.EventHandler(text_callback, thread_id),
+            ) as stream:
+                stream.until_done()
+
+            response_event = WebSocketMessage(
+                event=EventType.SERVER_AI_RESPONSE,
+                data=ServerResponse(content="", status=AIResponseStatus.completed)
+            )
+            asyncio.run(websocket.send_text(response_event.json()))  # Use the websocket argument
+        except Exception as e:
+            print(f"Error in stream_response: {e}")
 
     def check_assistant_exists(self):
         if self.assistant_id is None or self.assistant_id == "":
@@ -46,3 +76,7 @@ class AIService:
         config.aopse.providers["openai"].assistant_id = self.assistant_id
         save_config(config)
         return self.assistant
+
+    def create_thread(self):
+        thread = self.client.beta.threads.create()
+        return thread.id
