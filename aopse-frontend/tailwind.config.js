@@ -11,7 +11,12 @@ export default {
 		join(require.resolve('@skeletonlabs/skeleton'), '../**/*.{html,js,svelte,ts}')
 	],
 	theme: {
-		extend: {}
+		extend: {
+			fontFamily: {
+				materialSymbols: ['Material Symbols Outlined']
+			}
+
+		}
 	},
 	plugins: [
 		forms,

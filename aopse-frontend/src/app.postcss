@@ -3,6 +3,15 @@
 @tailwind utilities;
 @tailwind variants;
 
+@layer base {
+    @font-face {
+      font-family: 'Material Symbols Outlined';
+      font-style: normal;
+      font-weight: 100 700;
+      src: url('/fonts/Material_Symbols_Outlined.woff2') format('woff2');
+     }
+}
+
 html,
 body {
 	@apply h-full overflow-hidden;
