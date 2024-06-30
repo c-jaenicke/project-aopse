@@ -20,11 +20,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 event = WebSocketMessage.parse_raw(data)
 
                 if event.event == EventType.CLIENT_INITIATE_THREAD:
-                    await asyncio.create_task(run_in_executor(ai_service.create_thread(websocket)))
+                    await asyncio.create_task(run_in_executor(ai_service.create_thread, websocket))
                 elif event.event == EventType.CLIENT_CHANGE_MODEL:
                     message = event.data
                     await asyncio.create_task(
-                        run_in_executor(ai_service.update_assistant(message.content, websocket))
+                        run_in_executor(ai_service.update_assistant, message.content, websocket)
                     )
                 elif event.event == EventType.CLIENT_MESSAGE:
                     if not isinstance(event.data, ClientMessage):
