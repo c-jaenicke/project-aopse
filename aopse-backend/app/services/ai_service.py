@@ -203,8 +203,8 @@ class AIService:
             )
 
             response_event = WebSocketMessage(
-                event=EventType.SERVER_SUCCESS,
-                data=ServerResponse(content="Assistant updated successfully")
+                event=EventType.SERVER_CHANGE_MODEL,
+                data=ServerResponse(content=model)
             )
             asyncio.run(websocket.send_text(response_event.json()))
 
