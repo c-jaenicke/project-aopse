@@ -21,6 +21,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 if event.event == EventType.CLIENT_INITIATE_THREAD:
                     await asyncio.create_task(run_in_executor(ai_service.create_thread(websocket)))
+                elif event.event == EventType.CLIENT_CHANGE_MODEL:
+                    message = event.data
+                    await asyncio.create_task(
+                        run_in_executor(ai_service.update_assistant(message.content, websocket))
+                    )
                 elif event.event == EventType.CLIENT_MESSAGE:
                     if not isinstance(event.data, ClientMessage):
                         raise ValidationError("Invalid data type for CLIENT_MESSAGE event")
@@ -31,7 +36,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
                 elif event.event == EventType.CLIENT_ABORT:
                     message = event.data
-                    success = await asyncio.create_task(ai_service.cancel_current_run(message.thread_id))
+                    await asyncio.create_task(ai_service.cancel_current_run(message.thread_id))
                 else:
                     await websocket.send_text(
                         WebSocketMessage(

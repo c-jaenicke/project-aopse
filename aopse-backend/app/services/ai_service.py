@@ -18,6 +18,7 @@ class AIService:
         self.assistant = None
         self.check_assistant_exists()
         self.current_run_id = None
+        self.current_model = self.config.aopse.providers["openai"].model
 
     class EventHandler(AssistantEventHandler):
         def __init__(self, callback, thread_id):
@@ -120,73 +121,103 @@ class AIService:
             raise ValueError(f"Thread ID {thread_id} is invalid: {e}")
 
     def create_assistant(self):
-        self.assistant = self.client.beta.assistants.create(
-            name="AOPSE Assistant",
-            description="AOPSE (AI OSINT People Search Engine) is an AI tool that helps users assess and improve "
-                        "online privacy and security. It scans public databases to identify potential "
-                        "vulnerabilities, data leaks, and other risks associated with a user's online presence. AOPSE "
-                        "provides personalized recommendations to remediate issues and strengthen privacy and "
-                        "security, such as guidance on strong passwords, 2FA, removing old accounts, and other best "
-                        "practices.",
-            model="gpt-3.5-turbo",
-            instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users 
-                            assess and improve their online privacy and security.
+        try:
+            self.assistant = self.client.beta.assistants.create(
+                name="AOPSE Assistant",
+                description="AOPSE (AI OSINT People Search Engine) is an AI tool that helps users assess and improve "
+                            "online privacy and security. It scans public databases to identify potential "
+                            "vulnerabilities, data leaks, and other risks associated with a user's online presence. "
+                            "AOPSE"
+                            "provides personalized recommendations to remediate issues and strengthen privacy and "
+                            "security, such as guidance on strong passwords, 2FA, removing old accounts, and other best"
+                            "practices.",
+                model=self.current_model,
+                instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users 
+                                assess and improve their online privacy and security.
 
-                            Your main tasks are: 1. Scan public databases to identify potential vulnerabilities, data leaks, 
-                            and other risks associated with a user's online presence. 2. Provide personalized recommendations 
-                            to remediate issues and strengthen privacy and security, such as: - Guidance on creating strong 
-                            passwords - Advice on enabling two-factor authentication (2FA) - Suggestions for removing old or 
-                            unused online accounts - Other best practices for online privacy and security 3. Empower users to 
-                            protect their digital footprint by offering actionable insights and easy-to-follow steps.
+                                Your main tasks are: 1. Scan public databases to identify potential vulnerabilities, 
+                                data leaks, and other risks associated with a user's online presence. 2. Provide 
+                                personalized recommendations to remediate issues and strengthen privacy and security, 
+                                such as: - Guidance on creating strong passwords - Advice on enabling two-factor 
+                                authentication (2FA) - Suggestions for removing old or unused online accounts - Other 
+                                best practices for online privacy and security 3. Empower users to protect their 
+                                digital footprint by offering actionable insights and easy-to-follow steps.
 
-                            When responding to user queries, ensure that your answers are: - Clear, concise, and easy to 
-                            understand - Tailored to the user's specific situation and needs - Focused on practical solutions 
-                            and actionable advice - Encouraging and supportive, helping users feel empowered to take control 
-                            of their online privacy and security
+                                When responding to user queries, ensure that your answers are: - Clear, concise, 
+                                and easy to understand - Tailored to the user's specific situation and needs - 
+                                Focused on practical solutions and actionable advice - Encouraging and supportive, 
+                                helping users feel empowered to take control of their online privacy and security
 
-                            Remember, your goal is to be a trusted resource for users seeking to safeguard their digital 
-                            presence. Always prioritize their privacy, security, and well-being in your interactions.""",
-            tools=[{"type": "code_interpreter"}],
+                                Remember, your goal is to be a trusted resource for users seeking to safeguard their 
+                                digital presence. Always prioritize their privacy, security, and well-being in your 
+                                interactions.""",
+                tools=[{"type": "code_interpreter"}],
+            )
+            self.assistant_id = self.assistant.id
+            self.config.aopse.providers["openai"].assistant_id = self.assistant_id
 
-        )
-        self.assistant_id = self.assistant.id
-        # put assistant_id in config file
-        self.config.aopse.providers["openai"].assistant_id = self.assistant_id
-        ConfigSingleton.save_config(self.config)
-        return self.assistant
+            try:
+                ConfigSingleton.save_config(self.config)
+            except Exception as config_error:
+                print(f"Error saving configuration: {config_error}")
 
-    def update_assistant(self):
-        self.assistant = self.client.beta.assistants.update(
-            self.assistant_id,
-            name="AOPSE Assistant",
-            description="AOPSE (AI OSINT People Search Engine) is an AI tool that helps users assess and improve "
-                        "online privacy and security. It scans public databases to identify potential "
-                        "vulnerabilities, data leaks, and other risks associated with a user's online presence. AOPSE "
-                        "provides personalized recommendations to remediate issues and strengthen privacy and "
-                        "security, such as guidance on strong passwords, 2FA, removing old accounts, and other best "
-                        "practices.",
-            model="gpt-3.5-turbo",
-            instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users 
-                            assess and improve their online privacy and security.
+            return self.assistant
 
-                            Your main tasks are: 1. Scan public databases to identify potential vulnerabilities, data leaks, 
-                            and other risks associated with a user's online presence. 2. Provide personalized recommendations 
-                            to remediate issues and strengthen privacy and security, such as: - Guidance on creating strong 
-                            passwords - Advice on enabling two-factor authentication (2FA) - Suggestions for removing old or 
-                            unused online accounts - Other best practices for online privacy and security 3. Empower users to 
-                            protect their digital footprint by offering actionable insights and easy-to-follow steps.
+        except Exception as e:
+            print(f"Error creating assistant: {e}")
+            return None
 
-                            When responding to user queries, ensure that your answers are: - Clear, concise, and easy to 
-                            understand - Tailored to the user's specific situation and needs - Focused on practical solutions 
-                            and actionable advice - Encouraging and supportive, helping users feel empowered to take control 
-                            of their online privacy and security
+    def update_assistant(self, model: str, websocket: WebSocket):
+        try:
+            self.assistant = self.client.beta.assistants.update(
+                self.assistant_id,
+                name="AOPSE Assistant",
+                description="AOPSE (AI OSINT People Search Engine) is an AI tool that helps users assess and improve "
+                            "online privacy and security. It scans public databases to identify potential "
+                            "vulnerabilities, data leaks, and other risks associated with a user's online presence. "
+                            "AOPSE"
+                            "provides personalized recommendations to remediate issues and strengthen privacy and "
+                            "security, such as guidance on strong passwords, 2FA, removing old accounts, and other best"
+                            "practices.",
+                model=model,
+                instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users 
+                                assess and improve their online privacy and security.
+    
+                                Your main tasks are: 1. Scan public databases to identify potential vulnerabilities, 
+                                data leaks, and other risks associated with a user's online presence. 2. Provide 
+                                personalized recommendations to remediate issues and strengthen privacy and security, 
+                                such as: - Guidance on creating strong passwords - Advice on enabling two-factor 
+                                authentication (2FA) - Suggestions for removing old or unused online accounts - Other 
+                                best practices for online privacy and security 3. Empower users to protect their 
+                                digital footprint by offering actionable insights and easy-to-follow steps.
+    
+                                When responding to user queries, ensure that your answers are: - Clear, concise, 
+                                and easy to understand - Tailored to the user's specific situation and needs - 
+                                Focused on practical solutions and actionable advice - Encouraging and supportive, 
+                                helping users feel empowered to take control of their online privacy and security
+    
+                                Remember, your goal is to be a trusted resource for users seeking to safeguard their 
+                                digital presence. Always prioritize their privacy, security, and well-being in your 
+                                interactions.""",
+                tools=[{"type": "code_interpreter"}],
+            )
 
-                            Remember, your goal is to be a trusted resource for users seeking to safeguard their digital 
-                            presence. Always prioritize their privacy, security, and well-being in your interactions.""",
-            tools=[{"type": "code_interpreter"}],
+            response_event = WebSocketMessage(
+                event=EventType.SERVER_SUCCESS,
+                data=ServerResponse(content="Assistant updated successfully")
+            )
+            asyncio.run(websocket.send_text(response_event.json()))
 
-        )
-        return self.assistant
+            try:
+                self.config.aopse.providers["openai"].model = model
+                ConfigSingleton.save_config(self.config)
+            except Exception as config_error:
+                print(f"Error saving configuration: {config_error}")
+
+            return self.assistant
+        except Exception as e:
+            print(f"Error updating assistant: {e}")
+            return None
 
     def create_thread(self, websocket: WebSocket):
         try:
