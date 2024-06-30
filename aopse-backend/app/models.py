@@ -6,6 +6,7 @@ class EventType(str, Enum):
     CLIENT_MESSAGE = "client_message"
     CLIENT_ABORT = "client_abort"
     CLIENT_INITIATE_THREAD = "client_initiate_thread"
+    CLIENT_CHANGE_MODEL = "client_change_model"
     SERVER_AI_RESPONSE = "server_ai_response"
     SERVER_SEND_THREAD = "server_send_thread"
     SERVER_ABORT = "server_abort"
