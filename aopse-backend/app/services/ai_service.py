@@ -155,6 +155,49 @@ class AIService:
         ConfigSingleton.save_config(self.config)
         return self.assistant
 
-    def create_thread(self):
-        thread = self.client.beta.threads.create()
-        return thread.id
+    def update_assistant(self):
+        self.assistant = self.client.beta.assistants.update(
+            self.assistant_id,
+            name="AOPSE Assistant",
+            description="AOPSE (AI OSINT People Search Engine) is an AI tool that helps users assess and improve "
+                        "online privacy and security. It scans public databases to identify potential "
+                        "vulnerabilities, data leaks, and other risks associated with a user's online presence. AOPSE "
+                        "provides personalized recommendations to remediate issues and strengthen privacy and "
+                        "security, such as guidance on strong passwords, 2FA, removing old accounts, and other best "
+                        "practices.",
+            model="gpt-3.5-turbo",
+            instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users 
+                            assess and improve their online privacy and security.
+
+                            Your main tasks are: 1. Scan public databases to identify potential vulnerabilities, data leaks, 
+                            and other risks associated with a user's online presence. 2. Provide personalized recommendations 
+                            to remediate issues and strengthen privacy and security, such as: - Guidance on creating strong 
+                            passwords - Advice on enabling two-factor authentication (2FA) - Suggestions for removing old or 
+                            unused online accounts - Other best practices for online privacy and security 3. Empower users to 
+                            protect their digital footprint by offering actionable insights and easy-to-follow steps.
+
+                            When responding to user queries, ensure that your answers are: - Clear, concise, and easy to 
+                            understand - Tailored to the user's specific situation and needs - Focused on practical solutions 
+                            and actionable advice - Encouraging and supportive, helping users feel empowered to take control 
+                            of their online privacy and security
+
+                            Remember, your goal is to be a trusted resource for users seeking to safeguard their digital 
+                            presence. Always prioritize their privacy, security, and well-being in your interactions.""",
+            tools=[{"type": "code_interpreter"}],
+
+        )
+        return self.assistant
+
+    def create_thread(self, websocket: WebSocket):
+        try:
+            thread = self.client.beta.threads.create()
+            thread_id = thread.id
+            response_event = WebSocketMessage(
+                event=EventType.SERVER_SEND_THREAD,
+                data=ServerResponse(content=thread_id)
+            )
+            asyncio.run(websocket.send_text(response_event.json()))
+            return thread_id
+        except Exception as e:
+            print(f"Error creating thread: {e}")
+            return None

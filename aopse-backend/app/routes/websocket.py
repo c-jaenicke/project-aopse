@@ -20,13 +20,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 event = WebSocketMessage.parse_raw(data)
 
                 if event.event == EventType.CLIENT_INITIATE_THREAD:
-                    thread_id = ai_service.create_thread()
-                    await websocket.send_text(
-                        WebSocketMessage(
-                            event=EventType.SERVER_SEND_THREAD,
-                            data=ServerResponse(content=thread_id)
-                        ).json()
-                    )
+                    await asyncio.create_task(run_in_executor(ai_service.create_thread(websocket)))
                 elif event.event == EventType.CLIENT_MESSAGE:
                     if not isinstance(event.data, ClientMessage):
                         raise ValidationError("Invalid data type for CLIENT_MESSAGE event")
