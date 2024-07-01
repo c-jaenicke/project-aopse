@@ -7,8 +7,14 @@
 	import { storePopup } from '@skeletonlabs/skeleton';
 
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
+
+	// Modals
+	import { initializeStores, Modal } from '@skeletonlabs/skeleton';
+
+	initializeStores()
 </script>
 
+<Modal />
 <!-- App Shell -->
 <AppShell>
 	<svelte:fragment slot="header">
