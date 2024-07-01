@@ -27,27 +27,35 @@
 				</strong>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
-				<strong class="text-xl uppercase">
-					<a class="btn btn-sm variant-ghost-surface" href="/about"> About </a>
-				</strong>
+				<nav class="hidden sm:flex items-center space-x-4">
+					<a class="btn btn-sm variant-ghost-surface" href="/about">About</a>
+				</nav>
 				<LightSwitch />
+				<button class="btn btn-sm variant-ghost-surface sm:hidden">
+					<span class="font-materialSymbols">menu</span>
+				</button>
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
-	<div class="px-8 py-2 h-full min-h-96">
+
+	<div class="px-4 sm:px-8 py-4 min-h-[calc(100vh-8rem)]">
 		<!-- Page Route Content -->
 		<slot />
 	</div>
+
 	<svelte:fragment slot="pageFooter">
-		<AppBar>
-			<svelte:fragment slot="lead">
-				<div class="flex flex-wrap">
-					<a href="/about">About</a>
+		<footer class="bg-surface-100-800-token p-4">
+			<div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+				<div class="mb-4 sm:mb-0">
+					<p>&copy; AOPSE. All rights reserved.</p>
 				</div>
-			</svelte:fragment>
-			<svelte:fragment slot="trail">
-				<LightSwitch />
-			</svelte:fragment>
-		</AppBar>
+				<nav class="flex flex-wrap justify-center sm:justify-end space-x-4">
+					<a href="/" class="hover:underline">Home</a>
+					<a href="/about" class="hover:underline">About</a>
+					<a href="/privacy" class="hover:underline">Privacy Policy</a>
+					<a href="/terms" class="hover:underline">Terms of Service</a>
+				</nav>
+			</div>
+		</footer>
 	</svelte:fragment>
 </AppShell>
