@@ -13,6 +13,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!/lib/ProjectCard.svelte
 lib64/
 parts/
 sdist/
