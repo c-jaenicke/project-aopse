@@ -8,13 +8,14 @@
 
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
-	// Modals
-	import { initializeStores, Modal } from '@skeletonlabs/skeleton';
+	// Modals & Toasts
+	import { initializeStores, Modal, Toast } from '@skeletonlabs/skeleton';
 
 	initializeStores()
 </script>
 
 <Modal />
+<Toast />
 <!-- App Shell -->
 <AppShell>
 	<svelte:fragment slot="header">
