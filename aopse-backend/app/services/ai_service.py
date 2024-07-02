@@ -15,10 +15,10 @@ class AIService:
         self.config = ConfigSingleton.get_instance()
         self.client = OpenAI(api_key=self.config.aopse.providers["openai"].api_key)
         self.assistant_id = self.config.aopse.providers["openai"].assistant_id
-        self.assistant = None
-        self.check_assistant_exists()
-        self.current_run_id = None
         self.current_model = self.config.aopse.providers["openai"].model
+        self.assistant = None
+        self.current_run_id = None
+        self.check_assistant_exists()
 
     class EventHandler(AssistantEventHandler):
         def __init__(self, callback, thread_id):
@@ -103,14 +103,22 @@ class AIService:
         return False
 
     def check_assistant_exists(self):
-        if self.assistant_id is None or self.assistant_id == "":
-            self.create_assistant()
-        try:
-            self.assistant = self.client.beta.assistants.retrieve(self.assistant_id)
-            if self.assistant is not None:
-                return True
-        except Exception as e:
-            raise ValueError(f"Assistant ID {self.assistant_id} is invalid: {e}")
+        if not self.assistant_id:
+            print("Creating new assistant due to missing ID")
+            created_assistant = self.create_assistant()
+            if created_assistant is None:
+                raise ValueError("Failed to create assistant")
+            print("Assistant successfully created")
+        else:
+            try:
+                print("Trying to retrieve assistant")
+                self.assistant = self.client.beta.assistants.retrieve(self.assistant_id)
+                print("Assistant successfully retrieved")
+            except Exception as e:
+                print(f"Error retrieving assistant: {e}")
+                created_assistant = self.create_assistant()
+                if created_assistant is None:
+                    raise ValueError("Failed to create or retrieve assistant")
 
     def check_thread_exists(self, thread_id: str):
         try:
@@ -155,14 +163,11 @@ class AIService:
             )
             self.assistant_id = self.assistant.id
             self.config.aopse.providers["openai"].assistant_id = self.assistant_id
-
             try:
                 ConfigSingleton.save_config(self.config)
             except Exception as config_error:
                 print(f"Error saving configuration: {config_error}")
-
             return self.assistant
-
         except Exception as e:
             print(f"Error creating assistant: {e}")
             return None
@@ -182,7 +187,7 @@ class AIService:
                 model=model,
                 instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users 
                                 assess and improve their online privacy and security.
-    
+
                                 Your main tasks are: 1. Scan public databases to identify potential vulnerabilities, 
                                 data leaks, and other risks associated with a user's online presence. 2. Provide 
                                 personalized recommendations to remediate issues and strengthen privacy and security, 
@@ -190,12 +195,12 @@ class AIService:
                                 authentication (2FA) - Suggestions for removing old or unused online accounts - Other 
                                 best practices for online privacy and security 3. Empower users to protect their 
                                 digital footprint by offering actionable insights and easy-to-follow steps.
-    
+
                                 When responding to user queries, ensure that your answers are: - Clear, concise, 
                                 and easy to understand - Tailored to the user's specific situation and needs - 
                                 Focused on practical solutions and actionable advice - Encouraging and supportive, 
                                 helping users feel empowered to take control of their online privacy and security
-    
+
                                 Remember, your goal is to be a trusted resource for users seeking to safeguard their 
                                 digital presence. Always prioritize their privacy, security, and well-being in your 
                                 interactions.""",
