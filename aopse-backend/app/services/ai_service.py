@@ -116,7 +116,9 @@ class AIService:
                 print("Assistant successfully retrieved")
             except Exception as e:
                 print(f"Error retrieving assistant: {e}")
+                print("Creating new assistant due to failed retrieval")
                 created_assistant = self.create_assistant()
+                print("Assistant successfully created")
                 if created_assistant is None:
                     raise ValueError("Failed to create or retrieve assistant")
 

@@ -12,9 +12,14 @@ class OpenAIConfig(BaseSettings):
     assistant_id: str
 
 
+class TavilyConfig(BaseSettings):
+    api_key: str
+
+
 class AIAssistantConfig(BaseSettings):
     default_provider: str
     providers: Dict[str, OpenAIConfig]
+    tools: Dict[str, TavilyConfig]
 
 
 class BaseConfig(BaseSettings):
