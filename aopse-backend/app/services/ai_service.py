@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from fastapi import WebSocket
 from openai import OpenAI
@@ -8,6 +9,7 @@ from openai.types.beta.threads.runs import ToolCall, ToolCallDelta
 
 from app.config import ConfigSingleton
 from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus
+from app.utils.tavily import TavilySearch
 
 
 class AIService:
@@ -19,6 +21,7 @@ class AIService:
         self.assistant = None
         self.current_run_id = None
         self.check_assistant_exists()
+        self.tavily_search = TavilySearch()
 
     class EventHandler(AssistantEventHandler):
         def __init__(self, callback, thread_id):
@@ -32,8 +35,11 @@ class AIService:
         def on_event(self, event: AssistantStreamEvent) -> None:
             if event.event == "thread.run.created":
                 self.callback(event.data.id, event_type="created")
-            if event.event == "thread.run.cancelled":
+            elif event.event == "thread.run.cancelled":
                 self.callback("Run cancelled", event_type="cancelled")
+            elif event.event == "thread.run.requires_action":
+                tool_calls = event.data.required_action.submit_tool_outputs.tool_calls
+                self.callback(tool_calls, event_type="requires_action", thread_id=self.thread_id)
 
         def on_tool_call_created(self, tool_call: ToolCall):
             print(f"Tool call created: {tool_call}")
@@ -57,7 +63,7 @@ class AIService:
             content=message,
         )
 
-        def text_callback(text, event_type=None):
+        def text_callback(text, event_type=None, thread_id=None):
             if event_type == "created":
                 print(f"Run created: {text}")
                 self.current_run_id = text
@@ -67,6 +73,8 @@ class AIService:
                     data=ServerResponse(content=text, status=AIResponseStatus.aborted)
                 )
                 asyncio.run(websocket.send_text(response_event.json()))
+            elif event_type == "requires_action":
+                asyncio.run(self.handle_tool_calls(text, thread_id))
             else:
                 response_event = WebSocketMessage(
                     event=EventType.SERVER_AI_RESPONSE,
@@ -161,7 +169,25 @@ class AIService:
                                 Remember, your goal is to be a trusted resource for users seeking to safeguard their 
                                 digital presence. Always prioritize their privacy, security, and well-being in your 
                                 interactions.""",
-                tools=[{"type": "code_interpreter"}],
+                tools=[
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "tavily_search",
+                            "description": "Search the internet for up-to-date information",
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "query": {
+                                        "type": "string",
+                                        "description": "The search query"
+                                    }
+                                },
+                                "required": ["query"]
+                            }
+                        }
+                    }
+                ],
             )
             self.assistant_id = self.assistant.id
             self.config.aopse.providers["openai"].assistant_id = self.assistant_id
@@ -239,3 +265,21 @@ class AIService:
         except Exception as e:
             print(f"Error creating thread: {e}")
             return None
+
+    async def handle_tool_calls(self, tool_calls, thread_id):
+        outputs = []
+        for tool_call in tool_calls:
+            if tool_call.function.name == "tavily_search":
+                query = json.loads(tool_call.function.arguments)["query"]
+                search_results = await self.tavily_search.search(query)
+                outputs.append({
+                    "tool_call_id": tool_call.id,
+                    "output": json.dumps(search_results)
+                })
+
+        if outputs:
+            self.client.beta.threads.runs.submit_tool_outputs(
+                thread_id=thread_id,
+                run_id=self.current_run_id,
+                tool_outputs=outputs
+            )
