@@ -1,0 +1,12 @@
+aopse:
+   default_provider: "openai"
+   providers:
+      openai:
+         api_key: "<YOUR OPENAI API KEY HERE>"
+         model: gpt-3.5-turbo
+         assistant_id: ""  # Leave this empty, it will be filled on start
+   tools:
+      tavily:
+         api_key: "<YOUR TAVIL API KEY HERE>"
+      hibp:
+         api_key: "<YOUR HAVEIBEENPWNED API KEY HERE>"
