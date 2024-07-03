@@ -28,6 +28,10 @@ aopse:
          api_key: "<YOUR OPENAI API KEY HERE>"
          model: gpt-3.5-turbo
          assistant_id: "<THE ID OF THE ASSISTANT YOU CREATED HERE>"
+   tools:
+      tavily:
+         api_key: "<YOUR TAVIL API KEY HERE>"
+
 ```
 
 ## Development Setup
