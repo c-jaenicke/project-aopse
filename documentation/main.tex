@@ -6,17 +6,20 @@
 ]{scrartcl}
 \usepackage{graphicx} % Required for inserting images
 \usepackage[T1]{fontenc}
-\usepackage[ngerman]{babel}
+\usepackage[english]{babel}
 
 \usepackage[unicode=true]{hyperref}
 \usepackage[draft=false,babel,tracking=true,kerning=true,spacing=true]{microtype}
 \usepackage{enumerate}
 \usepackage{fancyhdr}
 
+\usepackage{multirow}
+\usepackage{float}
+
 \graphicspath{{./images/}}
 
 \pagestyle{fancy}
-\lhead{Alice, Bob, Charlie} % Bitte auch hier ihre Namen in Form "J. Schroeder"
+\lhead{A. Tippe, C. N. Jänicke, I. Bingöl}
 \rhead{\includegraphics[height=10mm]{S04_HTW_Berlin_Logo_pos_FARBIG_RGB.jpg}}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.6pt}
@@ -29,16 +32,18 @@
         \includegraphics[height=25mm]{S04_HTW_Berlin_Logo_pos_FARBIG_RGB.jpg} \\
         \vspace{1.0cm}
 
-        Ein aussagekräftiger Titel
+        Unternehmenssoftware Summersemester 2024
     
         \vspace{1.5cm}   
 
-        \textbf{Belegarbeit im Modul Informationssicherheit}
+        \textbf{Documentation - Project AOPSE}
 
         \vspace{1.5cm}
 
-        vorgelegt von \\
-        \textbf{Vorname Name Matrikelnr.}%Vor-, Nachname, Matrikelnummer
+        by \\
+        \textbf{Adrian Tippe 584501} \\
+        \textbf{Christoph Nicklas Jänicke 584533}\\
+        \textbf{Ilkaan Bingöl 584398}
 
         \vspace{1.5cm}    
         Berlin, \today\\
@@ -54,55 +59,122 @@
 \pagenumbering{arabic}
 
 % Nutzen Sie bei jedem neuen Kapitel eine neue Seite \newpage
-\section{Einführung}
-The software for the ARPA Network exists partly in the IMPs and
-partly in the respective HOSTs.  BB\&N has specified the software of
-the IMPs and it is the responsibility of the HOST groups to agree on
-HOST software. \\ \\
-During the summer of 1968, representatives from the initial four
-sites met several times to discuss the HOST software and initial
-experiments on the network. There emerged from these meetings a
-working group of three, Steve Carr from Utah, Jeff Rulifson from SRI,
-and Steve Crocker of UCLA, who met during the fall and winter. The
-most recent meeting was in the last week of March in Utah. Also
-present was Bill Duvall of SRI who has recently started working with
-Jeff Rulifson. \\ \\
-Somewhat independently, Gerard DeLoche of UCLA has been working on
-the HOST-IMP interface. \\ \\
-I present here some of the tentative agreements reached and some of
-the open questions encountered.  Very little of what is here is firm
-and reactions are expected.
+\section{Introduction}
+In the summer semester of 2024, the task for the Unternehmenssoftware class was to develop an AI-powered application using either an OpenAI model or an open-source model.
+\\ \\
+This document outlines our idea, the concepts, the challenges we encountered during development, and the details of the project itself.
+\\ \\
+The code of the application and the documentation can be found in the GitHub repository \hyperlink{https://github.com/c-jaenicke/project-aopse}{c-jaenicke/project-aopse}.
 
-\newpage
-\section{Bilder, Tabellen, Referenzen}
+\subsection{Project AOPSE}
+This project is called \textit{Project AOPSE}, which stands for \textit{AI-Driven OSINT People Search Engine}.
 
-So werden Bilder eingefügt:
+\section{Idea}
+In todays digital age, online privacy is more critical than ever, as personal information is constantly at risk of being exposed, stolen, or misused.
+\\ \\
+Our project aims to enhance user privacy and online security by utilizing Open Source Intelligence (OSINT) techniques, service breaches, and search engines. By leveraging these tools, we can identify and address vulnerabilities, providing users with insights and strategies to safeguard their personal data. \\
+This proactive approach not only helps in mitigating potential risks but also empowers users to take control of their online presence and protect their information.
 
-\begin{figure}[!ht]
-  \centering
-  \includegraphics[width=5cm]{milkyway.jpg}
-  \caption{Das ist die Milchstraße}
-  \label{fig:boat1}
-\end{figure}
+\section{User Story and Use Case}
+The following chapters will demonstrate the use case and explore a user story.
 
-Eine Referenz auf das Bild folgt über das Label \ref{fig:boat1} oder auf die Tabelle \ref{tab:table1}.
+\subsection{User Story}
 
-\begin{table}[h!]
-  \begin{center}
-    \label{tab:table1}
-    \begin{tabular}{l|c|r} % <-- Changed to S here.
-      \textbf{Value 1} & \textbf{Value 2} & \textbf{Value 3}\\
-      $\alpha$ & $\beta$ & $\gamma$ \\
-      \hline
-      1 & 1110.1 & a\\
-      2 & 10.1 & b\\
-      3 & 23.113231 & c\\
-    \end{tabular}
-    \caption{Table with aligned units.}
-  \end{center}
-\end{table}
+\textbf{Character:} Sarah Johnson, a 34-year-old marketing professional
+\\ \\
+\textbf{Background:} Sarah is a tech-savvy individual who values her online privacy and security. She regularly shops online, uses social media. Recently, Sarah has become increasingly concerned about the safety of her personal information after hearing about data breaches and privacy invasions in the news.
+\\ \\
+\textbf{Goal:} Sarah wants to ensure her online activities are secure and her personal data is protected from potential threats.
+\\ \\
+\textbf{User Story:} As Sarah Johnson, a marketing professional concerned about my online privacy, I want an application that can identify and fix weaknesses in my online presence. This way, I can understand potential risks, get useful recommendations, and improve my digital security to protect my personal information.
+\\ \\
+\textbf{Scenario:}
+\begin{enumerate}
+	\item \textbf{Discovery:} Sarah learns about the AI-powered application through an online tech forum discussing the latest tools for improving online security.
+	\item \textbf{Setup:} She opens the website and registers for the service.
+	\item \textbf{Initial Scan:} Sarah inputs her email address and begins the scan.
+	\item \textbf{Results and Insights:} The service provides her an overview of findings using her email address as a query. It offers advice on how to improve potential issues.
+	\item \textbf{Action and Improvement:} Sarah asks the service some questions to clarify actions and potential issues. She follows the recommendations to improve her privacy and security.
+	\item \textbf{Result:} With the help of the service, Sarah feels more confident about her online privacy and security.
+\end{enumerate}
 
-Passende Referenzen finden Sie z.B. unter \href{https://dblp.org/}{dblp}. Dort können Sie nach dem Titel des Papers suchen und sich die Bibtex citation rauskopieren. Ein Beispiel finden Sie in der "references.bib"  Datei. Um darauf zuzugreifen, nutzen Sie den folgenden Befehl \cite{scikit-learn}. Wenn es möglich ist, geben Sie noch den Link mit an, wo die Referenz zu finden ist.
+\subsection{Use Case}
+The following use cases have been identified:
+\begin{enumerate}
+	\item \textbf{Initial Assessment:} Using publicly available information on the user and cross-references his data against known breaches.
+	\item \textbf{Privacy Risk Evaluation:} Generate a report detailing the users online exposure, risks and the severity of identified breach.
+	\item \textbf{Mitigation Strategies:} Provide instructions on how to mitigate the risks and enhance the security of the user. 
+\end{enumerate}
+
+\section{Concepts}
+The following concepts and paradigms are being used.
+
+\subsection{OSINT}
+Open Source Intelligence (OSINT) is intelligence produced by collecting and analyzing  publicly available informationen \cite{what-is-osint}. Using manual research or automated tools.
+\\ \\
+The project leverages OSINT and automated OSINT tools to find information about the user.
+
+\subsection{Stateless}
+Given the the sensitive nature of the data, the application will not save any data connected to or requests made by the user. This ensures a high level of confidentiality and minimizes the risk of data breaches. 
+\\ \\
+Users are responsible for saving the information themselves. 
+
+\subsection{Living off the Land}
+Living off the Land (LOTL) is a technique employed by cybercriminals during malware attacks. It is based on the concept of ''using what you are given'' meaning attackers leverage existing tools and resources on the victim's system rather than introducing additional malware or external tools \cite{what-is-lotl}.
+\\ \\
+The application employs this concept by working solely with the data provided by the user. This ensures that it does not seek out loosely connected information, thereby avoiding the risk of compromising other individuals and their data or inadvertently encouraging searches for unrelated individuals.
+
+\subsection{Running Locally}
+For the maximum amount of privacy and security the project has been made open-source and with the possilibity of running it locally on any machine in mind. 
+
+\section{Development}
+The following sections will describe the development, the applications and frameworks we used an the challenges we faced.
+
+\subsection{OpenAI or Open-Source}
+We decided to use the OpenAI model \textit{GPT-3.5 Turbo} \footnote{\url{https://platform.openai.com/docs/models/gpt-3-5-turbo}}. Our testing has shown that this model produces the most accurate information related to privacy and security compared to open-source models.\\
+In addition to that its relativly cheap and easy to use.
+
+\subsection{Backend}
+The backend was developed using Python \footnote{\url{https://www.python.org/}}. We used the FastAPI \footnote{\url{https://fastapi.tiangolo.com/}} framework to build the backend and used the Official OpenAI Python library to call the model \footnote{\url{https://github.com/openai/openai-python}}.
+
+\subsection{Frontend}
+The frontend was built using SvelteKit \footnote{\url{https://kit.svelte.dev/}} utilizing the Skeleton UI library \footnote{\url{https://www.skeleton.dev/}}.
+
+\subsection{Challenges}
+The following chapters show the different challenges we faced during the development and the solutions we implemented to overcome the challenges.
+
+\subsubsection{Frontend}
+One of the first challenges was the frontend. We had specific requirements and ideas to show the user the output of the application, to summarize it, and to get the user input in an intuitive way.
+\\ \\
+The goal was to show all the output on the left and have a chat on the right side, as shown in the following image:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=10cm]{Frontend-draft.png}
+	\caption{Draft of the frontend}
+	\label{fig:draft-frontend}
+\end{figure} 
+None of the publicly available frontend libraries provided a solution to our requirements. To resolve this we created our own frontend using SvelteKit.
+
+\subsubsection{Frontend - Connection to the Backend}
+By building our own frontend, we faced the challenge of transporting information from the frontend to the backend, and back again. The first attempt, using a simple API on both sides failed.
+\\ \\
+We then transitioned to websockets, which allow the streaming of data to a listener. By doing so the frontend can send messages whenever and then listens to the response of the backend. This solved timeouts and other issues.
+
+\subsubsection{Finding Sources and APIs}
+Another challenge was the sourcing of information and tools to use in our application. While APIs and sources exist on the internet, most of them were behind a paywall or only available as tools to run locally.
+\\ \\
+We fixed the issues of local tooling by writing custom APIs for those tools, like spiderfoot \footnote{\url{https://github.com/smicallef/spiderfoot}}. Those APIs are being called by our backend.
+\\ \\
+In the end we ended up paying for the most important and useful APIs, like HaveIBeenPwned  \footnote{\url{https://haveibeenpwned.com/}}.
+
+\section{Future Plans}
+As this is the first version, we have exciting plants for future developments.
+\\ \\
+This includes the development of a custom AI-model, as to not rely on OpenAI. 
+Improving the performance of the backend. Possibly a full rewrite in a more advanced and safe language, like Rust \footnote{\url{https://www.rust-lang.org/}}. 
+While also improving the security further. 
+Implementing more tools and sources of information. 
+And adding customizable search parameters.
 
 % Referenzen bitte in references.bib einfügen
 \newpage

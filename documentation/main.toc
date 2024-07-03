@@ -1,0 +1,22 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{\numberline {1}Introduction}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Project AOPSE}{1}{subsection.1.1}%
+\contentsline {section}{\numberline {2}Idea}{1}{section.2}%
+\contentsline {section}{\numberline {3}User Story and Use Case}{1}{section.3}%
+\contentsline {subsection}{\numberline {3.1}User Story}{1}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Use Case}{2}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Concepts}{2}{section.4}%
+\contentsline {subsection}{\numberline {4.1}OSINT}{3}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Stateless}{3}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Living off the Land}{3}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Running Locally}{3}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Development}{3}{section.5}%
+\contentsline {subsection}{\numberline {5.1}OpenAI or Open-Source}{3}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Backend}{4}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Frontend}{4}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Challenges}{4}{subsection.5.4}%
+\contentsline {subsubsection}{\numberline {5.4.1}Frontend}{4}{subsubsection.5.4.1}%
+\contentsline {subsubsection}{\numberline {5.4.2}Frontend - Connection to the Backend}{5}{subsubsection.5.4.2}%
+\contentsline {subsubsection}{\numberline {5.4.3}Finding Sources and APIs}{5}{subsubsection.5.4.3}%
+\contentsline {section}{\numberline {6}Future Plans}{6}{section.6}%
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
