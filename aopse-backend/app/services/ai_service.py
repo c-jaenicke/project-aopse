@@ -11,6 +11,7 @@ from app.config import ConfigSingleton
 from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus, AIRunStatus
 from app.utils.tavily import TavilySearch
 
+from app.storage.chroma_storage import ChromaStorage
 
 class AIService:
     def __init__(self):
@@ -23,6 +24,8 @@ class AIService:
         self.websocket = None
         self.check_assistant_exists()
         self.tavily_search = TavilySearch()
+
+        self.chromadb = ChromaStorage()
 
     class EventHandler(AssistantEventHandler):
         def __init__(self, callback, thread_id):
@@ -237,6 +240,23 @@ class AIService:
                                 "required": ["query"]
                             }
                         }
+                    },
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "password_check",
+                            "description": "Check if a password is in the password database",
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "query": {
+                                        "type": "string",
+                                        "description": "The password to check"
+                                    }
+                                },
+                                "required": ["query"]
+                            }
+                        }
                     }
                 ],
             )
@@ -329,6 +349,46 @@ class AIService:
                     )
                 )
                 asyncio.run(self.websocket.send_text(tool_call_complete_event.json()))
+
+            if tool_call.function.name == "password_check":
+                print("ai_service: tool call password query")
+                query = json.loads(tool_call.function.arguments)["query"]
+
+                tool_call_event = WebSocketMessage(
+                    event=EventType.SERVER_TOOL_CALL,
+                    data=ServerResponse(
+                        content=f"Tool call {index}: Check the password '{query}'",
+                        status=AIResponseStatus.streaming,
+                        metadata={
+                            "tool_name": "password_checks",
+                            "query": query,
+                            "tool_call_id": tool_call.id
+                        }
+                    )
+                )
+            asyncio.run(self.websocket.send_text(tool_call_event.json()))
+
+            print("ai_service: calling password check with" + query)
+            search_results = self.chromadb.search(query)
+
+            outputs.append({
+                "tool_call_id": tool_call.id,
+                "output": json.dumps(search_results)
+            })
+
+            tool_call_complete_event = WebSocketMessage(
+                event=EventType.SERVER_TOOL_CALL,
+                data=ServerResponse(
+                    content=f"Tool call {index} completed: Check the password '{query}'",
+                    status=AIResponseStatus.completed,
+                    metadata={
+                        "tool_name": "password_check",
+                        "query": query,
+                        "tool_call_id": tool_call.id
+                    }
+                )
+            )
+            asyncio.run(self.websocket.send_text(tool_call_complete_event.json()))
 
         if outputs:
             submit_outputs_event = WebSocketMessage(
