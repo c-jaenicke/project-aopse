@@ -42,7 +42,7 @@ aopse:
 2. Open the `aopse-frontend` folder
    1. Run `npm install` to install all frontend dependencies
    2. Run the frontend using `npm run dev`
-   3. The frontend can be reached under <localhist:5173>
+   3. The frontend can be reached under <localhost:5173>
 3. Execute the `create-venv.sh` script in the root of the repository, this will create a virtual python environment for the project
    1. Activate the environment by using `source ./aopse-backend/bin/activate`
 4. Open the `aopse-backend` folder
