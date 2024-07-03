@@ -10,8 +10,10 @@ from openai.types.beta.threads.runs import ToolCall, ToolCallDelta
 from app.config import ConfigSingleton
 from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus, AIRunStatus
 from app.utils.tavily import TavilySearch
+from app.utils.account_checker import AccountChecker
 
 from app.storage.chroma_storage import ChromaStorage
+
 
 class AIService:
     def __init__(self):
@@ -26,6 +28,7 @@ class AIService:
         self.tavily_search = TavilySearch()
 
         self.chromadb = ChromaStorage()
+        self.account_checker = AccountChecker()
 
     class EventHandler(AssistantEventHandler):
         def __init__(self, callback, thread_id):
@@ -87,9 +90,9 @@ class AIService:
 
         try:
             with self.client.beta.threads.runs.create_and_stream(
-                thread_id=thread_id,
-                assistant_id=self.assistant_id,
-                event_handler=self.EventHandler(self.text_callback, thread_id)
+                    thread_id=thread_id,
+                    assistant_id=self.assistant_id,
+                    event_handler=self.EventHandler(self.text_callback, thread_id)
             ) as stream:
                 stream.until_done()
 
@@ -257,6 +260,23 @@ class AIService:
                                 "required": ["query"]
                             }
                         }
+                    },
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "check_accounts",
+                            "description": "Check if a username exists on various platforms",
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "query": {
+                                        "type": "string",
+                                        "description": "The username to check"
+                                    }
+                                },
+                                "required": ["query"]
+                            }
+                        }
                     }
                 ],
             )
@@ -366,29 +386,66 @@ class AIService:
                         }
                     )
                 )
-            asyncio.run(self.websocket.send_text(tool_call_event.json()))
+                asyncio.run(self.websocket.send_text(tool_call_event.json()))
 
-            print("ai_service: calling password check with" + query)
-            search_results = self.chromadb.search(query)
+                print("ai_service: calling password check with" + query)
+                search_results = self.chromadb.search(query)
 
-            outputs.append({
-                "tool_call_id": tool_call.id,
-                "output": json.dumps(search_results)
-            })
+                outputs.append({
+                    "tool_call_id": tool_call.id,
+                    "output": json.dumps(search_results)
+                })
 
-            tool_call_complete_event = WebSocketMessage(
-                event=EventType.SERVER_TOOL_CALL,
-                data=ServerResponse(
-                    content=f"Tool call {index} completed: Check the password '{query}'",
-                    status=AIResponseStatus.completed,
-                    metadata={
-                        "tool_name": "password_check",
-                        "query": query,
-                        "tool_call_id": tool_call.id
-                    }
+                tool_call_complete_event = WebSocketMessage(
+                    event=EventType.SERVER_TOOL_CALL,
+                    data=ServerResponse(
+                        content=f"Tool call {index} completed: Check the password '{query}'",
+                        status=AIResponseStatus.completed,
+                        metadata={
+                            "tool_name": "password_check",
+                            "query": query,
+                            "tool_call_id": tool_call.id
+                        }
+                    )
                 )
-            )
-            asyncio.run(self.websocket.send_text(tool_call_complete_event.json()))
+                asyncio.run(self.websocket.send_text(tool_call_complete_event.json()))
+
+            if tool_call.function.name == "check_accounts":
+                query = json.loads(tool_call.function.arguments)["query"]
+                tool_call_event = WebSocketMessage(
+                    event=EventType.SERVER_TOOL_CALL,
+                    data=ServerResponse(
+                        content=f"Tool call {index}: Check accounts for username '{query}'",
+                        status=AIResponseStatus.streaming,
+                        metadata={
+                            "tool_name": "check_accounts",
+                            "query": query,
+                            "tool_call_id": tool_call.id
+                        }
+                    )
+                )
+                asyncio.run(self.websocket.send_text(tool_call_event.json()))
+
+                account_check_results = self.account_checker.check(query)
+
+                outputs.append({
+                    "tool_call_id": tool_call.id,
+                    "output": json.dumps(account_check_results)
+                })
+
+                tool_call_complete_event = WebSocketMessage(
+                    event=EventType.SERVER_TOOL_CALL,
+                    data=ServerResponse(
+                        content=f"Tool call {index} completed: Check accounts for username '{query}'",
+                        status=AIResponseStatus.completed,
+                        metadata={
+                            "tool_name": "check_accounts",
+                            "query": query,
+                            "tool_call_id": tool_call.id
+                        }
+                    )
+                )
+                asyncio.run(self.websocket.send_text(tool_call_complete_event.json()))
 
         if outputs:
             submit_outputs_event = WebSocketMessage(
