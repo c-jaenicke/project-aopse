@@ -217,7 +217,7 @@ function createChatStore() {
             const lastMessage = messages[messages.length - 1];
             if (lastMessage.sender === 'ai') {
                 lastMessage.isLoading = false;
-                lastMessage.text += ' [Aborted]';
+                lastMessage.text += ' (Aborted)';
             }
             return messages;
         });
@@ -240,6 +240,10 @@ function createChatStore() {
     function handleAIStatus(data: ServerResponse): void {
         console.log('AI Status:', data.content, 'Run Status:', data.run_status);
         // TODO: maybe update UI elements based on AI status
+        // check if status is aborted and run status is cancelled
+        if (data.status === AIResponseStatus.ABORTED && data.run_status === AIRunStatus.CANCELLED) {
+            handleAbort();
+        }
     }
 
     function handleToolCall(data: ServerResponse): void {
