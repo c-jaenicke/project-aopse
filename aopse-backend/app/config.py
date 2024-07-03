@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 import yaml
 from pydantic_settings import BaseSettings
 
@@ -16,10 +16,14 @@ class TavilyConfig(BaseSettings):
     api_key: str
 
 
+class HIBPConfig(BaseSettings):
+    api_key: str
+
+
 class AIAssistantConfig(BaseSettings):
     default_provider: str
     providers: Dict[str, OpenAIConfig]
-    tools: Dict[str, TavilyConfig]
+    tools: Dict[str, Union[TavilyConfig, HIBPConfig]]
 
 
 class BaseConfig(BaseSettings):
