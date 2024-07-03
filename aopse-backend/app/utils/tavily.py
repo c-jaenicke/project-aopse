@@ -10,12 +10,9 @@ class TavilySearch:
         self.config = ConfigSingleton.get_instance()
         self.client = TavilyClient(self.config.aopse.tools["tavily"].api_key)
 
-    async def search(self, query: str):
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(
-            None,
-            self.client.search,
-            query,
-            "advanced"
-        )
-        return result
+    def search(self, query: str):
+        try:
+            result = self.client.search(query, "advanced")
+            return result
+        except Exception as e:
+            return str(e)
