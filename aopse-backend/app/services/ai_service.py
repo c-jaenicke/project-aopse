@@ -9,6 +9,7 @@ from openai.types.beta.threads.runs import ToolCall, ToolCallDelta
 
 from app.config import ConfigSingleton
 from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus, AIRunStatus
+from app.utils.hibp import HIBP
 from app.utils.tavily import TavilySearch
 from app.utils.account_checker import AccountChecker
 
@@ -29,6 +30,7 @@ class AIService:
 
         self.chromadb = ChromaStorage()
         self.account_checker = AccountChecker()
+        self.hibp = HIBP()
 
     class EventHandler(AssistantEventHandler):
         def __init__(self, callback, thread_id):
@@ -155,13 +157,26 @@ class AIService:
             )
             asyncio.run(self.websocket.send_text(response_event.json()))
 
-    async def cancel_current_run(self, thread_id: str):
+    def cancel_current_run(self, thread_id: str, websocket: WebSocket):
+        self.websocket = websocket
         if self.current_run_id is not None:
             try:
                 success = self.client.beta.threads.runs.cancel(run_id=self.current_run_id, thread_id=thread_id)
                 print(f"Cancelled run: {success}")
                 if success:
                     self.current_run_id = None
+
+                    response_event = WebSocketMessage(
+                        event=EventType.SERVER_AI_STATUS,
+                        data=ServerResponse(
+                            content="Run cancelled",
+                            status=AIResponseStatus.aborted,
+                            run_status=AIRunStatus.cancelled
+                        )
+                    )
+
+                    asyncio.run(self.websocket.send_text(response_event.json()))
+
                     return True
             except Exception as e:
                 print(f"Error cancelling run: {e}")
@@ -272,6 +287,23 @@ class AIService:
                                     "query": {
                                         "type": "string",
                                         "description": "The username to check"
+                                    }
+                                },
+                                "required": ["query"]
+                            }
+                        }
+                    },
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "check_breaches",
+                            "description": "Check if an email has been involved in data breaches using Have I Been Pwned",
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "query": {
+                                        "type": "string",
+                                        "description": "The email to check"
                                     }
                                 },
                                 "required": ["query"]
@@ -440,6 +472,43 @@ class AIService:
                         status=AIResponseStatus.completed,
                         metadata={
                             "tool_name": "check_accounts",
+                            "query": query,
+                            "tool_call_id": tool_call.id
+                        }
+                    )
+                )
+                asyncio.run(self.websocket.send_text(tool_call_complete_event.json()))
+
+            if tool_call.function.name == "check_breaches":
+                query = json.loads(tool_call.function.arguments)["query"]
+                tool_call_event = WebSocketMessage(
+                    event=EventType.SERVER_TOOL_CALL,
+                    data=ServerResponse(
+                        content=f"Tool call {index}: Check breaches for email '{query}'",
+                        status=AIResponseStatus.streaming,
+                        metadata={
+                            "tool_name": "check_breaches",
+                            "query": query,
+                            "tool_call_id": tool_call.id
+                        }
+                    )
+                )
+                asyncio.run(self.websocket.send_text(tool_call_event.json()))
+
+                breach_check_results = self.hibp.get_breaches(query)
+
+                outputs.append({
+                    "tool_call_id": tool_call.id,
+                    "output": json.dumps(breach_check_results)
+                })
+
+                tool_call_complete_event = WebSocketMessage(
+                    event=EventType.SERVER_TOOL_CALL,
+                    data=ServerResponse(
+                        content=f"Tool call {index} completed: Check breaches for email '{query}'",
+                        status=AIResponseStatus.completed,
+                        metadata={
+                            "tool_name": "check_breaches",
                             "query": query,
                             "tool_call_id": tool_call.id
                         }
