@@ -1,47 +1,51 @@
 # project-aopse
 
-AI OSINT People Search Engine - AOPSE
+AI-Driven OSINT People Search Engine
 
 ## Disclaimer
 
 This tool and all scripts included should be used for educational purposes only. Any misuse of this software will not be
 the responsibility of the author or of any other collaborator.
 
-## Idee
+## Idea
 
-Suchmaschine um Informationen über Personen zu erhalten.
+Our project aims to enhance user privacy and online security by utilizing Open Source
+Intelligence (OSINT) techniques, service breaches, and search engines. By leveraging
+these tools, we can identify and address vulnerabilities, providing users with insights and
+strategies to safeguard their personal data.
+This proactive approach not only helps in mitigating potential risks but also empowers
+users to take control of their online presence and protect their information
 
-Folgenden Informationen sind von interesse:
+## Setup
 
-- mögliche E-Mail-Adressen
-- Passwörter
-- Daten in Datenleacks
+The backend requires a `config.yaml` in the `aopse-backend` folder with the following content:
 
-Aus diesen Informationen folgen Empfehlungen:
+```yaml
+aopse:
+   default_provider: "openai"
+   providers:
+      openai:
+         api_key: "<YOUR OPENAI API KEY HERE>"
+         model: gpt-3.5-turbo
+         assistant_id: "<THE ID OF THE ASSISTANT YOU CREATED HERE>"
+```
 
-- für mehr Sicherheit
-- Maßnahmen zum Schutz von Daten
+## Development Setup
 
-## Dev Setup
+1. Clone the project using git
+2. Open the `aopse-frontend` folder
+   1. Run `npm install` to install all frontend dependencies
+   2. Run the frontend using `npm run dev`
+   3. The frontend can be reached under <localhist:5173>
+3. Execute the `create-venv.sh` script in the root of the repository, this will create a virtual python environment for the project
+   1. Activate the environment by using `source ./aopse-backend/bin/activate`
+4. Open the `aopse-backend` folder
+   1. Run the `scripts.sh` using `scripts.sh load`, to install all dependencies
+   2. Run the backend using `fastapi run`
 
-1. Projekt klonen
-2. In den `aopse-frontend`-Ordner gehen
-3. Dort `npm install` ausführen, um alle Pakete zu installieren
-4. Hier kann auch mit `npm run dev` der Webserver für das Testen der Seite gestartet werden. Dieser ist
-   unter <localhost:5173> erreichbar.
+### Extensions
 
-### Erweiterungen
+You can use the [Svelte DevTools](https://chromewebstore.google.com/detail/kfidecgcdjjfpeckbblhmfkhmlgecoff) 
+extension for your browser. 
 
-Für Svelte gibt es die [Svelte DevTools](https://chromewebstore.google.com/detail/kfidecgcdjjfpeckbblhmfkhmlgecoff)
-Erweiterung.
-
-Auch für Jetbrains IDEs, wie Intellij oder Webstorm gibt es
-eine [Svelte](https://plugins.jetbrains.com/plugin/12375-svelte) Erweiterung.
-
-### Seiten
-
-Folgende Internetseiten sind relevant für die Entwicklung:
-- https://www.skeleton.dev/docs/introduction
-- https://tailwindcss.com/
-- https://svelte.dev/
-- https://kit.svelte.dev/
+And the [Svelte](https://plugins.jetbrains.com/plugin/12375-svelte) extension for JetBrains IDEs.
