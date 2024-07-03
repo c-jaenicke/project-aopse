@@ -5,6 +5,7 @@ export const isThreadLoading: Writable<boolean> = writable(false);
 export const isModelUpdating: Writable<boolean> = writable(false);
 export const errorMessage: Writable<string | null> = writable(null);
 export const threadId: Writable<string> = writable('');
+
 export const Models = {
     GPT_4O: 'gpt-4o',
     GPT_4_TURBO: 'gpt-4-turbo',
@@ -12,14 +13,25 @@ export const Models = {
 } as const;
 
 export type ModelType = typeof Models[keyof typeof Models];
+
 export const currentModel: Writable<ModelType> = writable(Models.GPT_3_5_TURBO);
+
+interface ToolCall {
+    id: string;
+    name: string;
+    arguments: string;
+    status: 'in_progress' | 'completed';
+}
+
 
 interface ChatMessage {
     text: string;
     sender: 'user' | 'ai';
     isLoading?: boolean;
     error?: boolean;
+    toolCalls?: ToolCall[];
 }
+
 
 enum EventType {
     CLIENT_MESSAGE = "client_message",
@@ -30,7 +42,10 @@ enum EventType {
     SERVER_AI_RESPONSE = "server_ai_response",
     SERVER_SEND_THREAD = "server_send_thread",
     SERVER_ABORT = "server_abort",
-    SERVER_ERROR = "server_error"
+    SERVER_ERROR = "server_error",
+    SERVER_AI_STATUS = "server_ai_status",
+    SERVER_TOOL_CALL = "server_tool_call",
+    SERVER_REQUIRES_ACTION = "server_requires_action"
 }
 
 enum AIResponseStatus {
@@ -39,10 +54,30 @@ enum AIResponseStatus {
     ABORTED = "aborted"
 }
 
+enum AIRunStatus {
+    QUEUED = "queued",
+    IN_PROGRESS = "in_progress",
+    COMPLETED = "completed",
+    REQUIRES_ACTION = "requires_action",
+    EXPIRED = "expired",
+    CANCELLING = "cancelling",
+    CANCELLED = "cancelled",
+    FAILED = "failed",
+    INCOMPLETE = "incomplete"
+}
+
 interface ServerResponse {
     status?: AIResponseStatus;
     content: string;
+    run_status?: AIRunStatus;
+    metadata?: {
+        tool_name?: string;
+        query?: string;
+        tool_call_id?: string;
+        [key: string]: any;
+    };
 }
+
 
 interface ClientMessage {
     thread_id: string;
@@ -63,14 +98,12 @@ function createChatStore() {
     function connectWebSocket(): void {
         try {
             socket = new WebSocket('ws://localhost:8000/ws/chat');
-
             socket.onopen = () => {
                 console.log('WebSocket connected');
                 reconnectAttempts = 0;
                 errorMessage.set(null);
                 initiateThread();
             };
-
             socket.onmessage = (event: MessageEvent) => {
                 try {
                     const message: WebSocketMessage = JSON.parse(event.data);
@@ -80,7 +113,6 @@ function createChatStore() {
                     errorMessage.set('Error processing server response');
                 }
             };
-
             socket.onclose = (event: CloseEvent) => {
                 console.log('WebSocket disconnected', event.reason);
                 if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
@@ -92,7 +124,6 @@ function createChatStore() {
                     errorMessage.set('Unable to connect to server. Please try again later.');
                 }
             };
-
             socket.onerror = (error: Event) => {
                 console.error('WebSocket error:', error);
                 errorMessage.set('WebSocket error occurred');
@@ -119,6 +150,16 @@ function createChatStore() {
                 break;
             case EventType.SERVER_ERROR:
                 handleError(message.data?.content);
+                break;
+            case EventType.SERVER_AI_STATUS:
+                handleAIStatus(message.data as ServerResponse);
+                break;
+            case EventType.SERVER_TOOL_CALL:
+                console.log('Tool call:', message.data)
+                handleToolCall(message.data as ServerResponse);
+                break;
+            case EventType.SERVER_REQUIRES_ACTION:
+                handleRequiresAction(message.data as ServerResponse);
                 break;
         }
     }
@@ -196,6 +237,48 @@ function createChatStore() {
         });
     }
 
+    function handleAIStatus(data: ServerResponse): void {
+        console.log('AI Status:', data.content, 'Run Status:', data.run_status);
+        // TODO: maybe update UI elements based on AI status
+    }
+
+    function handleToolCall(data: ServerResponse): void {
+        if (data.metadata && typeof data.metadata === 'object' && 'tool_name' in data.metadata && 'query' in data.metadata && 'tool_call_id' in data.metadata) {
+            const toolName = data.metadata.tool_name;
+            const query = data.metadata.query;
+            const toolCallId = data.metadata.tool_call_id;
+
+            if (typeof toolName === 'string' && typeof query === 'string' && typeof toolCallId === 'string') {
+                chatMessages.update(messages => {
+                    const lastMessage = messages[messages.length - 1];
+                    if (lastMessage.sender === 'ai') {
+                        if (!lastMessage.toolCalls) {
+                            lastMessage.toolCalls = [];
+                        }
+                        const existingToolCall = lastMessage.toolCalls.find(tc => tc.id === toolCallId);
+                        if (existingToolCall) {
+                            existingToolCall.status = data.status === AIResponseStatus.COMPLETED ? 'completed' : 'in_progress';
+                        } else {
+                            lastMessage.toolCalls.push({
+                                id: toolCallId,
+                                name: toolName,
+                                arguments: query,
+                                status: data.status === AIResponseStatus.COMPLETED ? 'completed' : 'in_progress'
+                            });
+                        }
+                    }
+                    return messages;
+                });
+            }
+        }
+    }
+
+
+    function handleRequiresAction(data: ServerResponse): void {
+        console.log('AI requires action:', data.content);
+        // TODO: also maybe update UI elements based on this
+    }
+
     function initiateThread(): void {
         if (socket && socket.readyState === WebSocket.OPEN) {
             const message: WebSocketMessage = {
@@ -211,26 +294,22 @@ function createChatStore() {
             errorMessage.set('Message cannot be empty');
             return;
         }
-
         if (get(isResponseLoading)) {
             errorMessage.set('Please wait for the current message to complete');
             return;
         }
-
         if (!socket || socket.readyState !== WebSocket.OPEN) {
             errorMessage.set('Not connected to server. Please try again.');
             return;
         }
-
         try {
-            chatMessages.update(messages => [...messages, { text: currentMessage, sender: 'user' }]);
-            chatMessages.update(messages => [...messages, { text: '', sender: 'ai', isLoading: true }]);
+            chatMessages.update(messages => [...messages, {text: currentMessage, sender: 'user'}]);
+            chatMessages.update(messages => [...messages, {text: '', sender: 'ai', isLoading: true}]);
             isResponseLoading.set(true);
             errorMessage.set(null);
-
             const message: WebSocketMessage = {
                 event: EventType.CLIENT_MESSAGE,
-                data: { content: currentMessage, thread_id: get(threadId) }
+                data: {content: currentMessage, thread_id: get(threadId)}
             };
             socket.send(JSON.stringify(message));
         } catch (error) {
@@ -244,11 +323,10 @@ function createChatStore() {
             errorMessage.set('Not connected to server. Cannot stop response.');
             return;
         }
-
         try {
             const message: WebSocketMessage = {
                 event: EventType.CLIENT_ABORT,
-                data: { thread_id: get(threadId), content: '' }
+                data: {thread_id: get(threadId), content: ''}
             };
             socket.send(JSON.stringify(message));
         } catch (error) {
@@ -262,12 +340,11 @@ function createChatStore() {
             errorMessage.set('Not connected to server. Cannot change model.');
             return;
         }
-
         try {
             const currentModelValue = get(currentModel);
             const message: WebSocketMessage = {
                 event: EventType.CLIENT_CHANGE_MODEL,
-                data: { content: model, thread_id: get(threadId) }
+                data: {content: model, thread_id: get(threadId)}
             };
             socket.send(JSON.stringify(message));
             isModelUpdating.set(true);
@@ -286,16 +363,16 @@ function createChatStore() {
     }
 
     function clearMessages(): void {
-      chatMessages.set([]);
+        chatMessages.set([]);
     }
 
     connectWebSocket();
 
     return {
         subscribe: chatMessages.subscribe,
-        isLoading: { subscribe: isResponseLoading.subscribe },
-        errorMessage: { subscribe: errorMessage.subscribe },
-        currentModel: { subscribe: currentModel.subscribe },
+        isLoading: {subscribe: isResponseLoading.subscribe},
+        errorMessage: {subscribe: errorMessage.subscribe},
+        currentModel: {subscribe: currentModel.subscribe},
         sendMessage,
         stopResponse,
         changeModel,

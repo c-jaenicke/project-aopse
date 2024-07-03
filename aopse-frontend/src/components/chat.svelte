@@ -134,6 +134,21 @@
         {#each $chatStore as message, index}
             <div class="flex {message.sender === 'user' ? 'justify-end' : ''}">
                 <div class="rounded-lg p-3 max-w-[70%] {message.sender === 'user' ? 'bg-primary-500 text-white' : 'bg-surface-200 dark:bg-gray-700'} relative group">
+                    {#if message.sender === 'ai' && message.toolCalls}
+                        <div class="mb-2 p-2 bg-surface-300 dark:bg-gray-600 rounded">
+                            <h4 class="text-sm font-semibold mb-1">Tool Calls:</h4>
+                            {#each message.toolCalls as toolCall (toolCall.id)}
+                                <div class="text-xs mb-1">
+                                    <span class="font-medium">{toolCall.name}:</span> {toolCall.arguments}
+                                    {#if toolCall.status}
+                                        <span class="ml-1 px-1 py-0.5 rounded text-xs {toolCall.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'}">
+                                            {toolCall.status}
+                                        </span>
+                                    {/if}
+                                </div>
+                            {/each}
+                        </div>
+                    {/if}
                     <div class="{message.sender === 'ai' && !message.isLoading ? 'pb-6' : ''}">
                         {message.text}
                         {#if message.sender === 'ai' && message.isLoading}
