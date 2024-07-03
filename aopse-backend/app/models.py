@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from enum import Enum
+from typing import Optional, Dict, Any, Union
 
 
 class EventType(str, Enum):
@@ -12,11 +13,14 @@ class EventType(str, Enum):
     SERVER_SEND_THREAD = "server_send_thread"
     SERVER_ABORT = "server_abort"
     SERVER_ERROR = "server_error"
+    SERVER_AI_STATUS = "server_ai_status"
+    SERVER_TOOL_CALL = "server_tool_call"
+    SERVER_REQUIRES_ACTION = "server_requires_action"
 
 
 class ClientMessage(BaseModel):
     thread_id: str
-    content: str | None = None
+    content: Optional[str] = None
 
 
 class AIResponseStatus(str, Enum):
@@ -25,11 +29,25 @@ class AIResponseStatus(str, Enum):
     aborted = "aborted"
 
 
+class AIRunStatus(str, Enum):
+    queued = "queued"
+    in_progress = "in_progress"
+    completed = "completed"
+    requires_action = "requires_action"
+    expired = "expired"
+    cancelling = "cancelling"
+    cancelled = "cancelled"
+    failed = "failed"
+    incomplete = "incomplete"
+
+
 class ServerResponse(BaseModel):
-    status: AIResponseStatus | None = None
+    status: Optional[AIResponseStatus] = None
     content: str
+    run_status: Optional[AIRunStatus] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class WebSocketMessage(BaseModel):
     event: EventType
-    data: ClientMessage | ServerResponse | None = None
+    data: Optional[Union[ClientMessage, ServerResponse]] = None

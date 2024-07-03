@@ -8,7 +8,7 @@ from openai.types.beta import AssistantStreamEvent
 from openai.types.beta.threads.runs import ToolCall, ToolCallDelta
 
 from app.config import ConfigSingleton
-from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus
+from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus, AIRunStatus
 from app.utils.tavily import TavilySearch
 
 
@@ -20,6 +20,7 @@ class AIService:
         self.current_model = self.config.aopse.providers["openai"].model
         self.assistant = None
         self.current_run_id = None
+        self.websocket = None
         self.check_assistant_exists()
         self.tavily_search = TavilySearch()
 
@@ -29,17 +30,34 @@ class AIService:
             self.thread_id = thread_id
             self.callback = callback
 
-        def on_text_delta(self, delta, snapshot):
-            self.callback(delta.value)
-
         def on_event(self, event: AssistantStreamEvent) -> None:
             if event.event == "thread.run.created":
-                self.callback(event.data.id, event_type="created")
-            elif event.event == "thread.run.cancelled":
-                self.callback("Run cancelled", event_type="cancelled")
+                self.callback(event.data.id, event_type="run_created")
+            elif event.event == "thread.run.queued":
+                self.callback("Run queued", event_type="run_queued")
+            elif event.event == "thread.run.in_progress":
+                self.callback("Run in progress", event_type="run_in_progress")
+            elif event.event == "thread.run.completed":
+                self.callback("Run completed", event_type="run_completed")
             elif event.event == "thread.run.requires_action":
                 tool_calls = event.data.required_action.submit_tool_outputs.tool_calls
-                self.callback(tool_calls, event_type="requires_action", thread_id=self.thread_id)
+                self.callback(tool_calls, event_type="run_requires_action", thread_id=self.thread_id)
+            elif event.event == "thread.run.expired":
+                self.callback("Run expired", event_type="run_expired")
+            elif event.event == "thread.run.cancelling":
+                self.callback("Run cancelling", event_type="run_cancelling")
+            elif event.event == "thread.run.cancelled":
+                self.callback("Run cancelled", event_type="run_cancelled")
+            elif event.event == "thread.run.failed":
+                error = event.data.last_error
+                self.callback(f"Run failed: {error}", event_type="run_failed")
+            elif event.event == "thread.run.incomplete":
+                details = event.data.incomplete_details
+                self.callback(f"Run incomplete: {details}", event_type="run_incomplete")
+
+        def on_text_delta(self, delta, snapshot):
+            print(f"Text delta: {delta}")
+            self.callback(delta.value)
 
         def on_tool_call_created(self, tool_call: ToolCall):
             print(f"Tool call created: {tool_call}")
@@ -48,6 +66,7 @@ class AIService:
             print(f"Tool call delta: {delta}")
 
     def stream_response(self, thread_id: str, message: str, websocket: WebSocket):
+        self.websocket = websocket
         valid_thread = self.check_thread_exists(thread_id)
         if not valid_thread:
             response_event = WebSocketMessage(
@@ -63,30 +82,11 @@ class AIService:
             content=message,
         )
 
-        def text_callback(text, event_type=None, thread_id=None):
-            if event_type == "created":
-                print(f"Run created: {text}")
-                self.current_run_id = text
-            elif event_type == "cancelled":
-                response_event = WebSocketMessage(
-                    event=EventType.SERVER_AI_RESPONSE,
-                    data=ServerResponse(content=text, status=AIResponseStatus.aborted)
-                )
-                asyncio.run(websocket.send_text(response_event.json()))
-            elif event_type == "requires_action":
-                asyncio.run(self.handle_tool_calls(text, thread_id))
-            else:
-                response_event = WebSocketMessage(
-                    event=EventType.SERVER_AI_RESPONSE,
-                    data=ServerResponse(content=text, status=AIResponseStatus.streaming)
-                )
-                asyncio.run(websocket.send_text(response_event.json()))
-
         try:
             with self.client.beta.threads.runs.create_and_stream(
-                    thread_id=thread_id,
-                    assistant_id=self.assistant_id,
-                    event_handler=self.EventHandler(text_callback, thread_id),
+                thread_id=thread_id,
+                assistant_id=self.assistant_id,
+                event_handler=self.EventHandler(self.text_callback, thread_id)
             ) as stream:
                 stream.until_done()
 
@@ -97,6 +97,57 @@ class AIService:
             asyncio.run(websocket.send_text(response_event.json()))
         except Exception as e:
             print(f"Error in stream_response: {e}")
+
+    def text_callback(self, text, event_type=None, thread_id=None):
+        if event_type == "run_created":
+            print(f"Run created: {text}")
+            self.current_run_id = text
+        elif event_type in ["run_queued", "run_in_progress", "run_completed", "run_expired", "run_cancelling",
+                            "run_cancelled", "run_failed", "run_incomplete"]:
+            response_event = WebSocketMessage(
+                event=EventType.SERVER_AI_STATUS,
+                data=ServerResponse(content=text, status=AIResponseStatus.streaming)
+            )
+            asyncio.run(self.websocket.send_text(response_event.json()))
+        elif event_type == "run_requires_action":
+            requires_action_event = WebSocketMessage(
+                event=EventType.SERVER_REQUIRES_ACTION,
+                data=ServerResponse(
+                    content="AI requires additional information",
+                    status=AIResponseStatus.streaming,
+                    metadata={
+                        "tool_calls": [{"name": tool_call.function.name, "arguments": tool_call.function.arguments} for
+                                       tool_call in text]}
+                )
+            )
+            asyncio.run(self.websocket.send_text(requires_action_event.json()))
+            self.handle_tool_calls(text, thread_id)
+        elif event_type == "text_delta":
+            response_event = WebSocketMessage(
+                event=EventType.SERVER_AI_RESPONSE,
+                data=ServerResponse(content=text, status=AIResponseStatus.streaming)
+            )
+            asyncio.run(self.websocket.send_text(response_event.json()))
+        elif event_type in ["tool_call_created", "tool_call_delta"]:
+            tool_call = text
+            response_event = WebSocketMessage(
+                event=EventType.SERVER_TOOL_CALL,
+                data=ServerResponse(
+                    content=f"Tool call: {tool_call.function.name}",
+                    status=AIResponseStatus.streaming,
+                    metadata={
+                        "tool_name": tool_call.function.name,
+                        "tool_arguments": tool_call.function.arguments
+                    }
+                )
+            )
+            asyncio.run(self.websocket.send_text(response_event.json()))
+        else:
+            response_event = WebSocketMessage(
+                event=EventType.SERVER_AI_RESPONSE,
+                data=ServerResponse(content=text, status=AIResponseStatus.streaming)
+            )
+            asyncio.run(self.websocket.send_text(response_event.json()))
 
     async def cancel_current_run(self, thread_id: str):
         if self.current_run_id is not None:
@@ -204,35 +255,7 @@ class AIService:
         try:
             self.assistant = self.client.beta.assistants.update(
                 self.assistant_id,
-                name="AOPSE Assistant",
-                description="AOPSE (AI OSINT People Search Engine) is an AI tool that helps users assess and improve "
-                            "online privacy and security. It scans public databases to identify potential "
-                            "vulnerabilities, data leaks, and other risks associated with a user's online presence. "
-                            "AOPSE"
-                            "provides personalized recommendations to remediate issues and strengthen privacy and "
-                            "security, such as guidance on strong passwords, 2FA, removing old accounts, and other best"
-                            "practices.",
-                model=model,
-                instructions="""You are AOPSE (AI OSINT People Search Engine), an AI tool designed to help users 
-                                assess and improve their online privacy and security.
-
-                                Your main tasks are: 1. Scan public databases to identify potential vulnerabilities, 
-                                data leaks, and other risks associated with a user's online presence. 2. Provide 
-                                personalized recommendations to remediate issues and strengthen privacy and security, 
-                                such as: - Guidance on creating strong passwords - Advice on enabling two-factor 
-                                authentication (2FA) - Suggestions for removing old or unused online accounts - Other 
-                                best practices for online privacy and security 3. Empower users to protect their 
-                                digital footprint by offering actionable insights and easy-to-follow steps.
-
-                                When responding to user queries, ensure that your answers are: - Clear, concise, 
-                                and easy to understand - Tailored to the user's specific situation and needs - 
-                                Focused on practical solutions and actionable advice - Encouraging and supportive, 
-                                helping users feel empowered to take control of their online privacy and security
-
-                                Remember, your goal is to be a trusted resource for users seeking to safeguard their 
-                                digital presence. Always prioritize their privacy, security, and well-being in your 
-                                interactions.""",
-                tools=[{"type": "code_interpreter"}],
+                model=model
             )
 
             response_event = WebSocketMessage(
@@ -266,20 +289,67 @@ class AIService:
             print(f"Error creating thread: {e}")
             return None
 
-    async def handle_tool_calls(self, tool_calls, thread_id):
+    def handle_tool_calls(self, tool_calls, thread_id):
         outputs = []
-        for tool_call in tool_calls:
+        for index, tool_call in enumerate(tool_calls, start=1):
             if tool_call.function.name == "tavily_search":
                 query = json.loads(tool_call.function.arguments)["query"]
-                search_results = await self.tavily_search.search(query)
+
+                tool_call_event = WebSocketMessage(
+                    event=EventType.SERVER_TOOL_CALL,
+                    data=ServerResponse(
+                        content=f"Tool call {index}: Tavily search for '{query}'",
+                        status=AIResponseStatus.streaming,
+                        metadata={
+                            "tool_name": "tavily_search",
+                            "query": query,
+                            "tool_call_id": tool_call.id
+                        }
+                    )
+                )
+                asyncio.run(self.websocket.send_text(tool_call_event.json()))
+
+                search_results = self.tavily_search.search(query)
+
                 outputs.append({
                     "tool_call_id": tool_call.id,
                     "output": json.dumps(search_results)
                 })
 
+                tool_call_complete_event = WebSocketMessage(
+                    event=EventType.SERVER_TOOL_CALL,
+                    data=ServerResponse(
+                        content=f"Tool call {index} completed: Tavily search for '{query}'",
+                        status=AIResponseStatus.completed,
+                        metadata={
+                            "tool_name": "tavily_search",
+                            "query": query,
+                            "tool_call_id": tool_call.id
+                        }
+                    )
+                )
+                asyncio.run(self.websocket.send_text(tool_call_complete_event.json()))
+
         if outputs:
-            self.client.beta.threads.runs.submit_tool_outputs(
-                thread_id=thread_id,
-                run_id=self.current_run_id,
-                tool_outputs=outputs
+            submit_outputs_event = WebSocketMessage(
+                event=EventType.SERVER_AI_STATUS,
+                data=ServerResponse(
+                    content="Submitting tool outputs to AI for processing",
+                    status=AIResponseStatus.streaming,
+                    run_status=AIRunStatus.in_progress
+                )
             )
+            asyncio.run(self.websocket.send_text(submit_outputs_event.json()))
+
+            with self.client.beta.threads.runs.submit_tool_outputs_stream(
+                    thread_id=thread_id,
+                    run_id=self.current_run_id,
+                    tool_outputs=outputs,
+                    event_handler=self.EventHandler(self.text_callback, thread_id)
+            ) as stream:
+                stream.until_done()
+
+        print("Tool calls handling completed")
+
+
+
