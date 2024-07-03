@@ -140,6 +140,19 @@ The backend was developed using Python \footnote{\url{https://www.python.org/}}.
 \subsection{Frontend}
 The frontend was built using SvelteKit \footnote{\url{https://kit.svelte.dev/}} utilizing the Skeleton UI library \footnote{\url{https://www.skeleton.dev/}}.
 
+\subsection{Structure}
+The image below shows the internal structure of the application and the flow of information:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{Structure.png}
+	\caption{Draft of the frontend}
+	\label{fig:structure}
+\end{figure} 
+
+The user interacts with the frontend. \\
+The frontend then sends a request to the central backend API, which calls all the other APIs and tools.
+
+
 \subsection{Challenges}
 The following chapters show the different challenges we faced during the development and the solutions we implemented to overcome the challenges.
 
