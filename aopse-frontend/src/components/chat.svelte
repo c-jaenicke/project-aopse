@@ -1,20 +1,25 @@
 <script lang="ts">
-    import {onMount, afterUpdate} from 'svelte';
+    import {afterUpdate, onMount} from 'svelte';
     import {
         chatStore,
+        currentModel,
+        isModelUpdating,
         isResponseLoading,
         isThreadLoading,
-        isModelUpdating,
-        threadId,
-        currentModel,
         Models,
-        type ModelType
+        type ModelType,
+        threadId
     } from '../stores/chatStore.js';
-    import {Accordion, AccordionItem} from '@skeletonlabs/skeleton';
-    import {getModalStore, type ModalSettings} from '@skeletonlabs/skeleton';
-    import {clipboard} from '@skeletonlabs/skeleton';
-    import {popup, type PopupSettings} from '@skeletonlabs/skeleton';
-
+    import {
+        Accordion,
+        AccordionItem,
+        clipboard,
+        getModalStore,
+        type ModalSettings,
+        popup,
+        type PopupSettings
+    } from '@skeletonlabs/skeleton';
+    import DOMPurify from 'dompurify';
 
     let currentMessage = '';
     let messageContainer: HTMLElement;
@@ -63,6 +68,32 @@
     };
 
 
+    function formatMessage(text: string): string {
+        const encodedText = text
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        const rawHtml = encodedText
+            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+            .replace(/\*(.*?)\*/g, '<i>$1</i>')
+            .replace(/~~(.*?)~~/g, '<del>$1</del>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^\> (.*$)/gm, '<blockquote>$1</blockquote>')
+            .replace(/\n/g, '<br>')
+            .replace(/^\* (.*$)/gm, '<li>$1</li>')
+            .replace(/^([0-9]+\. .*$)/gm, '<li>$1</li>')
+            .replace(/<\/li>\n<li>/g, '</li><li>')
+            .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+            .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="anchor hover:underline text-primary-500 hover:text-primary-700">$1</a>');
+
+        return DOMPurify.sanitize(rawHtml, {
+            ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'blockquote', 'code', 'del'],
+            ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
+        });
+    }
 </script>
 
 <div class="card bg-surface-100 dark:bg-gray-800 flex flex-col h-[calc(100vh-4rem)]">
@@ -150,7 +181,13 @@
                         </div>
                     {/if}
                     <div class="{message.sender === 'ai' && !message.isLoading ? 'pb-6' : ''}">
-                        {message.text}
+                        {#if message.sender === 'ai'}
+                            <div class="whitespace-pre-wrap break-words">
+                                {@html formatMessage(message.text)}
+                            </div>
+                        {:else}
+                            <div>{message.text}</div>
+                        {/if}
                         {#if message.sender === 'ai' && message.isLoading}
                             <span class="inline-block animate-pulse">▋</span>
                         {/if}
