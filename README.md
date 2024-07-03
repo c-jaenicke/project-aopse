@@ -18,7 +18,7 @@ users to take control of their online presence and protect their information
 
 ## Setup
 
-The backend requires a `config.yaml` in the `aopse-backend` folder with the following content:
+The backend requires that you correctly fill out the [`config.yaml`](./aopse-backend/config.yaml) in the `aopse-backend` folder with the following content:
 
 ```yaml
 aopse:
@@ -27,10 +27,12 @@ aopse:
       openai:
          api_key: "<YOUR OPENAI API KEY HERE>"
          model: gpt-3.5-turbo
-         assistant_id: "<THE ID OF THE ASSISTANT YOU CREATED HERE>"
+         assistant_id: ""  # Leave this empty, it will be filled on start
    tools:
       tavily:
          api_key: "<YOUR TAVIL API KEY HERE>"
+      hibp:
+         api_key: "<YOUR HAVEIBEENPWNED API KEY HERE>"
 
 ```
 
