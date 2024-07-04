@@ -15,6 +15,9 @@ from app.utils.account_checker import AccountChecker
 
 from app.storage.chroma_storage import ChromaStorage
 
+from app.utils.sherlock_search import SherlockSearch
+import app.utils.sherlock_search
+
 
 class AIService:
     def __init__(self):
@@ -27,10 +30,10 @@ class AIService:
         self.websocket = None
         self.check_assistant_exists()
         self.tavily_search = TavilySearch()
-
         self.chromadb = ChromaStorage()
-        self.account_checker = AccountChecker()
+        #self.account_checker = AccountChecker()
         self.hibp = HIBP()
+        self.account_check = SherlockSearch()
 
     class EventHandler(AssistantEventHandler):
         def __init__(self, callback, thread_id):
@@ -279,7 +282,7 @@ class AIService:
                     {
                         "type": "function",
                         "function": {
-                            "name": "check_accounts",
+                            "name": "account_check",
                             "description": "Check if a username exists on various platforms",
                             "parameters": {
                                 "type": "object",
@@ -442,15 +445,17 @@ class AIService:
                 )
                 asyncio.run(self.websocket.send_text(tool_call_complete_event.json()))
 
-            if tool_call.function.name == "check_accounts":
+            if tool_call.function.name == "account_check":
+                print("ai_service: tool call account_check")
                 query = json.loads(tool_call.function.arguments)["query"]
+
                 tool_call_event = WebSocketMessage(
                     event=EventType.SERVER_TOOL_CALL,
                     data=ServerResponse(
-                        content=f"Tool call {index}: Check accounts for username '{query}'",
+                        content=f"Tool call {index}: Check the username '{query}'",
                         status=AIResponseStatus.streaming,
                         metadata={
-                            "tool_name": "check_accounts",
+                            "tool_name": "account_check",
                             "query": query,
                             "tool_call_id": tool_call.id
                         }
@@ -458,20 +463,23 @@ class AIService:
                 )
                 asyncio.run(self.websocket.send_text(tool_call_event.json()))
 
-                account_check_results = self.account_checker.check(query)
+                print("ai_service: calling password check with:" + query)
+                #search_results = self.account_check.search(query)
+                search_results = self.account_check.search(query)
+                #search_results = sherlock_util.main(query)
 
                 outputs.append({
                     "tool_call_id": tool_call.id,
-                    "output": json.dumps(account_check_results)
+                    "output": json.dumps(search_results)
                 })
 
                 tool_call_complete_event = WebSocketMessage(
                     event=EventType.SERVER_TOOL_CALL,
                     data=ServerResponse(
-                        content=f"Tool call {index} completed: Check accounts for username '{query}'",
+                        content=f"Tool call {index} completed: Check the password '{query}'",
                         status=AIResponseStatus.completed,
                         metadata={
-                            "tool_name": "check_accounts",
+                            "tool_name": "account_check",
                             "query": query,
                             "tool_call_id": tool_call.id
                         }
