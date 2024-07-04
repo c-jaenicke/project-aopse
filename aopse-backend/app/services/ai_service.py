@@ -16,7 +16,6 @@ from app.utils.account_checker import AccountChecker
 from app.storage.chroma_storage import ChromaStorage
 
 from app.utils.sherlock_search import SherlockSearch
-import app.utils.sherlock_search
 
 
 class AIService:
@@ -31,7 +30,8 @@ class AIService:
         self.check_assistant_exists()
         self.tavily_search = TavilySearch()
         self.chromadb = ChromaStorage()
-        #self.account_checker = AccountChecker()
+        # accoutn checker has been replaced by sherlock
+        # self.account_checker = AccountChecker()
         self.hibp = HIBP()
         self.account_check = SherlockSearch()
 
@@ -464,9 +464,9 @@ class AIService:
                 asyncio.run(self.websocket.send_text(tool_call_event.json()))
 
                 print("ai_service: calling password check with:" + query)
-                #search_results = self.account_check.search(query)
+                # search_results = self.account_check.search(query)
                 search_results = self.account_check.search(query)
-                #search_results = sherlock_util.main(query)
+                # search_results = sherlock_util.main(query)
 
                 outputs.append({
                     "tool_call_id": tool_call.id,
@@ -544,6 +544,3 @@ class AIService:
                 stream.until_done()
 
         print("Tool calls handling completed")
-
-
-
