@@ -25,8 +25,12 @@
 				<strong class="text-xl uppercase">
 					<a href="/">AOPSE</a>
 				</strong>
+
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
+				<nav class="hidden sm:flex items-center space-x-4">
+					<a class="btn btn-sm variant-ghost-surface" href="/">Chat</a>
+				</nav>
 				<nav class="hidden sm:flex items-center space-x-4">
 					<a class="btn btn-sm variant-ghost-surface" href="/about">About</a>
 				</nav>
