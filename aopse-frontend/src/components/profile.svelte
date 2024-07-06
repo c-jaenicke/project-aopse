@@ -1,25 +1,6 @@
 <script lang="ts">
-import { ProgressRadial } from '@skeletonlabs/skeleton';
+    import {findings} from "../stores/chatStore";
 
-let userInfo = {
-    email: 'user@example.com',
-    username: 'user',
-    socialMedia: ['Facebook', 'Twitter', 'LinkedIn']
-};
-
-let privacyScore = 65;
-
-let vulnerabilities = [
-    'Weak password',
-    'Public social media profiles',
-    'Unsecured network usage'
-];
-
-let leakedPasswords = 2;
-
-function getAdvice(vulnerability: string) {
-    console.log(`Getting advice for ${vulnerability}`);
-}
 </script>
 
 <div class="card bg-surface-100 dark:bg-gray-800 flex flex-col h-[calc(100vh-4rem)]">
@@ -28,41 +9,41 @@ function getAdvice(vulnerability: string) {
     </header>
     <section class="p-4 flex-grow overflow-y-auto space-y-4">
 
-        <div>
-            <h3 class="h3 mb-2">User Information</h3>
-            <p>Email: {userInfo.email}</p>
-            <p>Username: {userInfo.username}</p>
-            <p>Social Media: {userInfo.socialMedia.join(', ')}</p>
-        </div>
-
-        <div>
-            <h3 class="h3 mb-2">Privacy Score</h3>
-            <ProgressRadial value={privacyScore} meter="stroke-primary-500">
-                {privacyScore}%
-            </ProgressRadial>
-        </div>
-
-        <div>
-            <h3 class="h3 mb-2">Vulnerabilities</h3>
-            <ul class="list">
-                {#each vulnerabilities as vulnerability}
-                    <li>
-                        <button class="btn variant-soft w-full text-left" on:click={() => getAdvice(vulnerability)}>
-                            {vulnerability}
-                        </button>
-                    </li>
+        <h3 class="h3 mb-2">Information</h3>
+        <div class="table-container">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Query</th>
+                    <th>Result</th>
+                </tr>
+                </thead>
+                <tbody>
+                {#each $findings as finding, index}
+                    <tr>
+                        <td>
+                            {#if finding.key === 'password_check'}
+                                password
+                            {:else if finding.key === 'account_check'}
+                                username
+                            {:else if finding.key === 'check_breaches'}
+                                breach
+                            {/if}
+                        </td>
+                        <td>{finding.value}</td>
+                        <td>
+                            {#if finding.key === 'account_check'}
+                                <a href='{finding.result}' target='_blank'>link</a>
+                            {:else}
+                                {finding.result}
+                            {/if}
+                        </td>
+                    </tr>
                 {/each}
-            </ul>
-        </div>
+                </tbody>
 
-        {#if leakedPasswords > 0}
-            <div>
-                <h3 class="h3 mb-2">Leaked Passwords</h3>
-                <p class="text-error-500">
-                    We found {leakedPasswords} leaked password{leakedPasswords > 1 ? 's' : ''} associated with your email.
-                    Please change {leakedPasswords > 1 ? 'them' : 'it'} immediately!
-                </p>
-            </div>
-        {/if}
+            </table>
+        </div>
     </section>
 </div>

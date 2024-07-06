@@ -434,15 +434,17 @@ class AIService:
                 tool_call_complete_event = WebSocketMessage(
                     event=EventType.SERVER_TOOL_CALL,
                     data=ServerResponse(
-                        content=f"Tool call {index} completed: Check the password '{query}'",
+                        content=f"Tool call {index} completed: Check the password '{query}' + status: '{search_results}'",
                         status=AIResponseStatus.completed,
                         metadata={
                             "tool_name": "password_check",
                             "query": query,
-                            "tool_call_id": tool_call.id
+                            "tool_call_id": tool_call.id,
+                            "result": search_results
                         }
                     )
                 )
+
                 asyncio.run(self.websocket.send_text(tool_call_complete_event.json()))
 
             if tool_call.function.name == "account_check":
@@ -463,7 +465,7 @@ class AIService:
                 )
                 asyncio.run(self.websocket.send_text(tool_call_event.json()))
 
-                print("ai_service: calling password check with:" + query)
+                print("ai_service: calling username check with:" + query)
                 # search_results = self.account_check.search(query)
                 search_results = self.account_check.search(query)
                 # search_results = sherlock_util.main(query)
@@ -476,12 +478,13 @@ class AIService:
                 tool_call_complete_event = WebSocketMessage(
                     event=EventType.SERVER_TOOL_CALL,
                     data=ServerResponse(
-                        content=f"Tool call {index} completed: Check the password '{query}'",
+                        content=f"Tool call {index} completed: Check the username '{query}'",
                         status=AIResponseStatus.completed,
                         metadata={
                             "tool_name": "account_check",
                             "query": query,
-                            "tool_call_id": tool_call.id
+                            "tool_call_id": tool_call.id,
+                            "result": search_results
                         }
                     )
                 )
@@ -518,7 +521,8 @@ class AIService:
                         metadata={
                             "tool_name": "check_breaches",
                             "query": query,
-                            "tool_call_id": tool_call.id
+                            "tool_call_id": tool_call.id,
+                            "result": breach_check_results
                         }
                     )
                 )

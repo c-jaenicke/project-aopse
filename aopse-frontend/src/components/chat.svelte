@@ -206,7 +206,6 @@
         {/each}
     </section>
 
-
     <footer class="p-4 border-t border-surface-300 dark:border-gray-700 mt-auto">
         <div class="input-group input-group-divider grid-cols-[1fr_auto]">
             <input

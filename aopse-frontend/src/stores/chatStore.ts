@@ -5,6 +5,7 @@ export const isThreadLoading: Writable<boolean> = writable(false);
 export const isModelUpdating: Writable<boolean> = writable(false);
 export const errorMessage: Writable<string | null> = writable(null);
 export const threadId: Writable<string> = writable('');
+export const findings: Writable<Finding[]> = writable([]);
 
 export const Models = {
     GPT_4O: 'gpt-4o',
@@ -32,6 +33,11 @@ interface ChatMessage {
     toolCalls?: ToolCall[];
 }
 
+interface Finding {
+    key: string;
+    value: string;
+    result: string;
+}
 
 enum EventType {
     CLIENT_MESSAGE = "client_message",
@@ -77,7 +83,6 @@ interface ServerResponse {
         [key: string]: any;
     };
 }
-
 
 interface ClientMessage {
     thread_id: string;
@@ -262,6 +267,41 @@ function createChatStore() {
                         const existingToolCall = lastMessage.toolCalls.find(tc => tc.id === toolCallId);
                         if (existingToolCall) {
                             existingToolCall.status = data.status === AIResponseStatus.COMPLETED ? 'completed' : 'in_progress';
+                            // TODO here findings
+                            console.log('chatStore: updating findings')
+                            if (toolName === 'password_check') {
+                                let result = ''
+                                if ('result' in data.metadata) {
+                                    result = data.metadata.result
+                                    console.log(result)
+                                }
+
+                                const finding = {
+                                    "key": toolName,
+                                    "value": query,
+                                    "result": (result  ? 'leaked' : 'safe')
+                                }
+                                findings.update(values => {
+                                    values.push(finding)
+                                    return values
+                                })
+                            } else if (toolName === 'account_check') {
+                                let result = []
+                                data.metadata.result.forEach(object => {
+                                    findings.update(values => {
+                                        values.push({
+                                            "key": toolName,
+                                            "value": object.name,
+                                            "result": object.url
+                                        })
+                                        return values
+                                    })
+                                })
+                            } else if (toolName === 'check_breaches') {
+                                // TODO here findings from check_breaches, idk the return value we get, is it a json array?
+                            }
+
+
                         } else {
                             lastMessage.toolCalls.push({
                                 id: toolCallId,
