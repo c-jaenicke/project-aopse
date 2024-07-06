@@ -1,28 +1,19 @@
 <script lang="ts">
-    import {Accordion, AccordionItem, type ModalSettings, getModalStore} from '@skeletonlabs/skeleton';
-    import {passwordFindings, accountFindings, breachFindings} from "../stores/chatStore";
+    import {Accordion, AccordionItem, getModalStore, type ModalSettings, ProgressRadial} from '@skeletonlabs/skeleton';
+    import {
+        passwordFindings,
+        accountFindings,
+        breachFindings,
+        type PasswordFinding,
+        type AccountFinding,
+        type BreachFinding
+    } from "../stores/chatStore";
 
-    interface PasswordFinding {
-        value: string;
-        result: 'leaked' | 'safe';
-    }
-
-    interface AccountFinding {
-        value: string;
-        result: string;
-    }
-
-    interface BreachFinding {
-        value: string;
-        breachDate: string;
-        dataClasses: string[];
+    function getPreviewItems<T>(items: T[]): T[] {
+        return items.slice(0, 5);
     }
 
     const modalStore = getModalStore();
-
-    function getPreviewItems<T>(items: T[]): T[] {
-        return items.slice(0, 10);
-    }
 
     function openModal(items: PasswordFinding[] | AccountFinding[] | BreachFinding[], title: string): void {
         const modal: ModalSettings = {
@@ -37,31 +28,46 @@
     function shortenUrl(url: string): string {
         try {
             const parsedUrl = new URL(url);
-            let shortUrl = parsedUrl.hostname;
-            if (parsedUrl.pathname !== '/') {
-                shortUrl += parsedUrl.pathname.length > 20
-                    ? parsedUrl.pathname.substring(0, 20) + '...'
-                    : parsedUrl.pathname;
-            }
-            return shortUrl;
+            return parsedUrl.hostname;
         } catch (e) {
             return url.length > 30 ? url.substring(0, 30) + '...' : url;
         }
     }
 
+    $: leakedPasswords = $passwordFindings.filter(f => f.result === 'leaked').length;
+    $: safePasswords = $passwordFindings.filter(f => f.result === 'safe').length;
+    $: totalPasswords = $passwordFindings.length;
 </script>
 
 <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg flex flex-col h-[calc(100vh-4rem)]">
     <header class="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 class="h2 text-center">Profile</h2>
+        <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white">Privacy Profile</h2>
     </header>
 
     <section class="p-4 flex-grow overflow-y-auto space-y-4">
         <Accordion>
             <AccordionItem>
-                <svelte:fragment slot="lead">Passwords ({$passwordFindings.length})</svelte:fragment>
-                <svelte:fragment slot="summary">Preview of password findings</svelte:fragment>
+                <svelte:fragment slot="lead">
+                    <span class="font-materialSymbols text-2xl {leakedPasswords > 0 ? 'text-error-500' : 'text-success-500'}">lock</span>
+                </svelte:fragment>
+                <svelte:fragment slot="summary">
+                    <div class="flex items-center justify-between">
+                        <span>Passwords ({$passwordFindings.length})</span>
+                    </div>
+                </svelte:fragment>
                 <svelte:fragment slot="content">
+                    <p class="mb-4">
+                        {#if leakedPasswords > 0}
+            <span class="text-error-500">
+                {leakedPasswords} of {totalPasswords}
+                checked passwords {leakedPasswords === 1 ? 'has' : 'have'} been leaked.
+            </span>
+                        {:else}
+            <span class="text-success-500">
+                All {totalPasswords} checked passwords are safe.
+            </span>
+                        {/if}
+                    </p>
                     <div class="overflow-x-auto">
                         <table class="table-auto w-full">
                             <thead>
@@ -75,28 +81,42 @@
                                 <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">{finding.value}</td>
                                     <td class="px-4 py-2">
-                                    <span class={finding.result === 'leaked' ? 'text-red-500' : 'text-green-500'}>
-                                        {finding.result}
-                                    </span>
+                            <span class={finding.result === 'leaked' ? 'text-error-500' : 'text-success-500'}>
+                                {finding.result}
+                            </span>
                                     </td>
                                 </tr>
                             {/each}
                             </tbody>
                         </table>
+                        {#if $passwordFindings.length > 5}
+                            <div class="flex items-center justify-center my-2">
+                                <p class="mr-2">
+                                    Showing only 5 of {$passwordFindings.length} items.
+                                </p>
+                                <button class="text-primary-500 flex items-center justify-center"
+                                        on:click|stopPropagation={() => openModal($passwordFindings, `All Password Findings`)}>
+                                    <span class="font-materialSymbols text-xl">open_in_full</span>
+                                    <span class="ml-1">View all</span>
+                                </button>
+                            </div>
+                        {/if}
                     </div>
-                    {#if $passwordFindings.length > 10}
-                        <button class="btn variant-filled mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-                                on:click={() => openModal($passwordFindings, `All Password Findings`)}>
-                            Show all ({$passwordFindings.length})
-                        </button>
-                    {/if}
                 </svelte:fragment>
+
             </AccordionItem>
 
             <AccordionItem>
-                <svelte:fragment slot="lead">Accounts ({$accountFindings.length})</svelte:fragment>
-                <svelte:fragment slot="summary">Preview of account findings</svelte:fragment>
+                <svelte:fragment slot="lead">
+                    <span class="font-materialSymbols text-2xl">account_circle</span>
+                </svelte:fragment>
+                <svelte:fragment slot="summary">
+                    <div class="flex items-center justify-between">
+                        Accounts ({$accountFindings.length})
+                    </div>
+                </svelte:fragment>
                 <svelte:fragment slot="content">
+                    <p class="mb-4">We found {$accountFindings.length} accounts associated with your information.</p>
                     <div class="overflow-x-auto">
                         <table class="table-auto w-full">
                             <thead>
@@ -106,12 +126,11 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {#each getPreviewItems($accountFindings) as finding}
+                            {#each getPreviewItems($accountFindings) as finding, index}
                                 <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">{finding.value}</td>
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">
-                                        <a href={finding.result} target="_blank" class="text-blue-500 hover:underline"
-                                           title={finding.result}>
+                                        <a href={finding.result} target="_blank" class="text-blue-500 hover:underline">
                                             {shortenUrl(finding.result)}
                                         </a>
                                     </td>
@@ -119,20 +138,44 @@
                             {/each}
                             </tbody>
                         </table>
+                        {#if $accountFindings.length > 5}
+                            <div class="flex items-center justify-center my-2">
+                                <p class="mr-2">
+                                    Showing only 5 of {$accountFindings.length} items.
+                                </p>
+                                <button class="text-primary-500 flex items-center justify-center"
+                                        on:click|stopPropagation={() => openModal($accountFindings, `All Account Findings`)}>
+                                    <span class="font-materialSymbols text-xl">open_in_full</span>
+                                    <span class="ml-1">View all</span>
+                                </button>
+                            </div>
+                        {/if}
                     </div>
-                    {#if $accountFindings.length > 10}
-                        <button class="btn variant-filled mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-                                on:click={() => openModal($accountFindings, `All Account Findings`)}>
-                            Show all ({$accountFindings.length})
-                        </button>
-                    {/if}
                 </svelte:fragment>
             </AccordionItem>
 
             <AccordionItem>
-                <svelte:fragment slot="lead">Breaches ({$breachFindings.length})</svelte:fragment>
-                <svelte:fragment slot="summary">Preview of breach findings</svelte:fragment>
+                <svelte:fragment slot="lead">
+                    <span class="font-materialSymbols text-2xl {$breachFindings.length > 0 ? 'text-error-500' : 'text-success-500'}">security</span>
+                </svelte:fragment>
+                <svelte:fragment slot="summary">
+                    <div class="flex items-center justify-between">
+                        Breaches ({$breachFindings.length})
+                    </div>
+                </svelte:fragment>
                 <svelte:fragment slot="content">
+                    <p class="mb-4">
+                        {#if $breachFindings.length > 0}
+                            <span class="text-error-500">
+                                Your information was found in {$breachFindings.length}
+                                data {$breachFindings.length === 1 ? 'breach' : 'breaches'}.
+                            </span>
+                        {:else}
+                            <span class="text-success-500">
+                                No data breaches were found containing your information.
+                            </span>
+                        {/if}
+                    </p>
                     <div class="overflow-x-auto">
                         <table class="table-auto w-full">
                             <thead>
@@ -152,13 +195,19 @@
                             {/each}
                             </tbody>
                         </table>
+                        {#if $breachFindings.length > 5}
+                            <div class="flex items-center justify-center my-2">
+                                <p class="mr-2">
+                                    Showing only 5 of {$breachFindings.length} items.
+                                </p>
+                                <button class="text-primary-500 flex items-center justify-center"
+                                        on:click|stopPropagation={() => openModal($breachFindings, `All Breach Findings`)}>
+                                    <span class="font-materialSymbols text-xl">open_in_full</span>
+                                    <span class="ml-1">View all</span>
+                                </button>
+                            </div>
+                        {/if}
                     </div>
-                    {#if $breachFindings.length > 10}
-                        <button class="btn variant-filled mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-                                on:click={() => openModal($breachFindings, `All Breach Findings`)}>
-                            Show all ({$breachFindings.length})
-                        </button>
-                    {/if}
                 </svelte:fragment>
             </AccordionItem>
         </Accordion>

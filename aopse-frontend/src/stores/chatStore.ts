@@ -33,17 +33,17 @@ interface ChatMessage {
     toolCalls?: ToolCall[];
 }
 
-interface PasswordFinding {
+export interface PasswordFinding {
     value: string;
     result: 'leaked' | 'safe';
 }
 
-interface AccountFinding {
+export interface AccountFinding {
     value: string;
-    result: string; // URL
+    result: string;
 }
 
-interface BreachFinding {
+export interface BreachFinding {
     value: string;
     breachDate: string;
     dataClasses: string[];

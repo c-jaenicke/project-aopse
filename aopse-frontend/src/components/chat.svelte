@@ -44,7 +44,10 @@
         const modal: ModalSettings = {
             type: 'confirm',
             title: 'Start New Thread',
-            body: 'Are you sure you want to start a new thread? This will delete all current messages.',
+            body: `
+                <p>Are you sure you want to start a new thread?</p>
+                <p>This will delete all current messages.</p>
+            `,
             response: (r: boolean) => {
                 if (r) {
                     chatStore.initiateThread();

@@ -54,7 +54,7 @@
                         {#if type === 'password'}
                             <td class="px-4 py-2 bg-white dark:bg-gray-800">{item.value}</td>
                             <td class="px-4 py-2 bg-white dark:bg-gray-800">
-                                    <span class={item.result === 'leaked' ? 'text-red-500' : 'text-green-500'}>
+                                    <span class={item.result === 'leaked' ? 'text-error-500' : 'text-success-500'}>
                                         {item.result}
                                     </span>
                             </td>
