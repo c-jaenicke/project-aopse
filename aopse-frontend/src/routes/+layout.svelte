@@ -12,6 +12,7 @@
 	import { initializeStores, Modal, Toast } from '@skeletonlabs/skeleton';
 	import type {ModalSettings} from "@skeletonlabs/skeleton";
 	import {chatStore, isThreadLoading} from "../stores/chatStore.js";
+	import FullListModal from "../components/FullListModal.svelte";
 
 	initializeStores()
 
@@ -28,9 +29,13 @@
 		};
 		modalStore.trigger(modal);
 	}
+
+    const modalComponentRegistry = {
+        fullListModal: { ref: FullListModal }
+    };
 </script>
 
-<Modal />
+<Modal components={modalComponentRegistry} />
 <Toast />
 <!-- App Shell -->
 <AppShell>
