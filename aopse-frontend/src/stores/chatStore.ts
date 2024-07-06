@@ -80,6 +80,7 @@ interface ServerResponse {
         tool_name?: string;
         query?: string;
         tool_call_id?: string;
+        result?: any;
         [key: string]: any;
     };
 }
@@ -92,6 +93,29 @@ interface ClientMessage {
 interface WebSocketMessage {
     event: EventType;
     data?: ServerResponse | ClientMessage;
+}
+
+interface CheckBreachesResult {
+}
+
+interface CheckBreachesEntry {
+    "Name": string;
+    "Title": string;
+    "Domain": string;
+    "BreachDate": string;
+    "AddedDate": string;
+    "ModifiedDate": string;
+    "PwnCount": number;
+    "Description": string;
+    "LogoPath": string;
+    "DataClasses": string[];
+    "IsVerified": boolean;
+    "IsFabricated": boolean;
+    "IsSensitive": boolean;
+    "IsRetired": boolean;
+    "IsSpamList": boolean;
+    "IsMalware": boolean;
+    "IsSubscriptionFree": boolean;
 }
 
 function createChatStore() {
@@ -267,13 +291,11 @@ function createChatStore() {
                         const existingToolCall = lastMessage.toolCalls.find(tc => tc.id === toolCallId);
                         if (existingToolCall) {
                             existingToolCall.status = data.status === AIResponseStatus.COMPLETED ? 'completed' : 'in_progress';
-                            // TODO here findings
-                            console.log('chatStore: updating findings')
+
                             if (toolName === 'password_check') {
                                 let result = ''
                                 if ('result' in data.metadata) {
                                     result = data.metadata.result
-                                    console.log(result)
                                 }
 
                                 const finding = {
@@ -285,8 +307,8 @@ function createChatStore() {
                                     values.push(finding)
                                     return values
                                 })
+
                             } else if (toolName === 'account_check') {
-                                let result = []
                                 data.metadata.result.forEach(object => {
                                     findings.update(values => {
                                         values.push({
@@ -297,10 +319,22 @@ function createChatStore() {
                                         return values
                                     })
                                 })
-                            } else if (toolName === 'check_breaches') {
-                                // TODO here findings from check_breaches, idk the return value we get, is it a json array?
-                            }
 
+                            } else if (toolName === 'check_breaches') {
+                                console.log(data.metadata.result)
+                                const result = JSON.parse(data.metadata.result)
+                                console.log(result)
+                                result.forEach((object: CheckBreachesEntry) => {
+                                    findings.update(values => {
+                                        values.push({
+                                            "key": toolName,
+                                            "value": (object.Domain === '' ? object.Name : object.Domain),
+                                            "result": 'Breached on: ' + object.BreachDate + '\nInformation: ' + object.DataClasses
+                                        })
+                                        return values
+                                    })
+                                })
+                            }
 
                         } else {
                             lastMessage.toolCalls.push({
