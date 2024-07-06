@@ -33,11 +33,25 @@ interface ChatMessage {
     toolCalls?: ToolCall[];
 }
 
-interface Finding {
-    key: string;
+interface PasswordFinding {
     value: string;
-    result: string;
+    result: 'leaked' | 'safe';
 }
+
+interface AccountFinding {
+    value: string;
+    result: string; // URL
+}
+
+interface BreachFinding {
+    value: string;
+    breachDate: string;
+    dataClasses: string[];
+}
+
+export const passwordFindings: Writable<PasswordFinding[]> = writable([]);
+export const accountFindings: Writable<AccountFinding[]> = writable([]);
+export const breachFindings: Writable<BreachFinding[]> = writable([]);
 
 enum EventType {
     CLIENT_MESSAGE = "client_message",
@@ -293,49 +307,20 @@ function createChatStore() {
                             existingToolCall.status = data.status === AIResponseStatus.COMPLETED ? 'completed' : 'in_progress';
 
                             if (toolName === 'password_check') {
-                                let result = ''
+                                let result = '';
                                 if ('result' in data.metadata) {
-                                    result = data.metadata.result
+                                    result = data.metadata.result;
                                 }
-
-                                const finding = {
-                                    "key": toolName,
-                                    "value": query,
-                                    "result": (result  ? 'leaked' : 'safe')
-                                }
-                                findings.update(values => {
-                                    values.push(finding)
-                                    return values
-                                })
-
+                                handlePasswordCheck(query, result);
                             } else if (toolName === 'account_check') {
-                                data.metadata.result.forEach(object => {
-                                    findings.update(values => {
-                                        values.push({
-                                            "key": toolName,
-                                            "value": object.name,
-                                            "result": object.url
-                                        })
-                                        return values
-                                    })
-                                })
-
+                                if ('result' in data.metadata && Array.isArray(data.metadata.result)) {
+                                    handleAccountCheck(data.metadata.result);
+                                }
                             } else if (toolName === 'check_breaches') {
-                                console.log(data.metadata.result)
-                                const result = JSON.parse(data.metadata.result)
-                                console.log(result)
-                                result.forEach((object: CheckBreachesEntry) => {
-                                    findings.update(values => {
-                                        values.push({
-                                            "key": toolName,
-                                            "value": (object.Domain === '' ? object.Name : object.Domain),
-                                            "result": 'Breached on: ' + object.BreachDate + '\nInformation: ' + object.DataClasses
-                                        })
-                                        return values
-                                    })
-                                })
+                                if ('result' in data.metadata && typeof data.metadata.result === 'string') {
+                                    handleCheckBreaches(data.metadata.result);
+                                }
                             }
-
                         } else {
                             lastMessage.toolCalls.push({
                                 id: toolCallId,
@@ -349,6 +334,33 @@ function createChatStore() {
                 });
             }
         }
+    }
+
+
+    function handlePasswordCheck(query: string, result: string) {
+        const finding: PasswordFinding = {
+            value: query,
+            result: result ? 'leaked' : 'safe'
+        };
+        passwordFindings.update(values => [...values, finding]);
+    }
+
+    function handleAccountCheck(result: any[]) {
+        const newFindings: AccountFinding[] = result.map(object => ({
+            value: object.name,
+            result: object.url
+        }));
+        accountFindings.update(values => [...values, ...newFindings]);
+    }
+
+    function handleCheckBreaches(result: string) {
+        const parsedResult = JSON.parse(result);
+        const newFindings: BreachFinding[] = parsedResult.map((object: CheckBreachesEntry) => ({
+            value: object.Domain === '' ? object.Name : object.Domain,
+            breachDate: object.BreachDate,
+            dataClasses: object.DataClasses
+        }));
+        breachFindings.update(values => [...values, ...newFindings]);
     }
 
 
