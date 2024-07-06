@@ -1,6 +1,6 @@
-<script>
+<script lang="ts">
 	import '../app.postcss';
-	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
+	import {AppShell, AppBar, LightSwitch, getModalStore} from '@skeletonlabs/skeleton';
 
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
@@ -10,8 +10,24 @@
 
 	// Modals & Toasts
 	import { initializeStores, Modal, Toast } from '@skeletonlabs/skeleton';
+	import type {ModalSettings} from "@skeletonlabs/skeleton";
+	import {chatStore, isThreadLoading} from "../stores/chatStore.js";
 
 	initializeStores()
+
+	const modalStore = getModalStore();
+	function openHelpModal() {
+		const modal: ModalSettings = {
+			type: 'alert',
+			title: 'Help',
+			body: 'The following prompts, or prompts similar to these, will execute a specific tool:\n' +
+					'<strong class="font-bold"> check the username "username"</strong>will start a search for the username on different social media networks.\n' +
+					'<strong class="font-bold"> check the password "password"</strong>will check if the password is present in one of the wordlists and give advice.\n' +
+					'<strong class="font-bold"> has the email "email address" been breached</strong>will check if the given email address has been found in any breaches.\n' +
+					'<strong class="font-bold"> is there any new information on "topic"</strong>will check for new information or news on the topic.'
+		};
+		modalStore.trigger(modal);
+	}
 </script>
 
 <Modal />
@@ -25,11 +41,17 @@
 				<strong class="text-xl uppercase">
 					<a href="/">AOPSE</a>
 				</strong>
-
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				<nav class="hidden sm:flex items-center space-x-4">
 					<a class="btn btn-sm variant-ghost-surface" href="/">Chat</a>
+				</nav>
+				<nav class="hidden sm:flex items-center space-x-4">
+					<button
+							type="button"
+							class="btn btn-sm variant-filled-warning"
+							on:click={openHelpModal}
+					>Help</button>
 				</nav>
 				<nav class="hidden sm:flex items-center space-x-4">
 					<a class="btn btn-sm variant-ghost-surface" href="/about">About</a>
