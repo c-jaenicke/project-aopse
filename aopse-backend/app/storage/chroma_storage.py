@@ -52,7 +52,7 @@ class ChromaStorage:
         #    where_document={"$contains": password}
         #)
         documents = self.chroma_collection.get(include=["documents"])
-        print(documents["documents"][0])
+        #print(documents["documents"][0])
         #result = self.chroma_collection.query(
         #    n_results=10,
         #    query_texts=["Does this exact string exist:" + password]
