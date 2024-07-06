@@ -16,6 +16,9 @@
 \usepackage{multirow}
 \usepackage{float}
 
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true}
+
 \graphicspath{{./images/}}
 
 \pagestyle{fancy}
@@ -232,6 +235,18 @@ Another challenge was determining the weight of the issues found by the tools. F
 Additionally, we had no way of knowing if the user had already resolved an issue. For example, there was no way to verify if a user had changed a leaked password.
 \\ \\
 Given these issues, providing the user with a score would create a false sense of security.
+
+\section{Using Project AOPSE}
+The project can be run locally. The setup is described in the readme.md in the GitHub repository of the project on \hyperlink{https://github.com/c-jaenicke/project-aopse}{c-jaenicke/project-aopse}.
+\\ \\
+The following prompts, or prompts similar to these, will execute a specific tool:
+\begin{itemize}
+	\item \lstinline[breaklines]|check the username <username>|: will start a search for the username on different social media networks
+	\item \lstinline[breaklines]|check the password <password>|: will check if the database is present in one of the wordlists and give advice
+	\item \lstinline[breaklines]|has the email <email address> been breached|: will check if the given email address has been found in any breaches
+	\item \lstinline[breaklines]|is there any new information on <topic>|: will check for new information or news on the topic
+\end{itemize}
+In addition to those prompts, any prompt will lead to a result based on the previous messages and context provided.
 
 \section{Future Plans}
 As this is the first version, we have exciting plants for future developments.

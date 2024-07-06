@@ -26,5 +26,6 @@
 \contentsline {subsubsection}{\numberline {5.6.3}Finding Sources and APIs}{7}{subsubsection.5.6.3}%
 \contentsline {subsubsection}{\numberline {5.6.4}Integrating Sherlock}{8}{subsubsection.5.6.4}%
 \contentsline {subsubsection}{\numberline {5.6.5}Giving the User a Score}{8}{subsubsection.5.6.5}%
-\contentsline {section}{\numberline {6}Future Plans}{8}{section.6}%
+\contentsline {section}{\numberline {6}Using Project AOPSE}{8}{section.6}%
+\contentsline {section}{\numberline {7}Future Plans}{9}{section.7}%
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
