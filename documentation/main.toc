@@ -15,9 +15,16 @@
 \contentsline {subsection}{\numberline {5.2}Backend}{4}{subsection.5.2}%
 \contentsline {subsection}{\numberline {5.3}Frontend}{4}{subsection.5.3}%
 \contentsline {subsection}{\numberline {5.4}Structure}{4}{subsection.5.4}%
-\contentsline {subsection}{\numberline {5.5}Challenges}{4}{subsection.5.5}%
-\contentsline {subsubsection}{\numberline {5.5.1}Frontend}{5}{subsubsection.5.5.1}%
-\contentsline {subsubsection}{\numberline {5.5.2}Frontend - Connection to the Backend}{5}{subsubsection.5.5.2}%
-\contentsline {subsubsection}{\numberline {5.5.3}Finding Sources and APIs}{5}{subsubsection.5.5.3}%
-\contentsline {section}{\numberline {6}Future Plans}{6}{section.6}%
+\contentsline {subsection}{\numberline {5.5}Tools and APIs}{5}{subsection.5.5}%
+\contentsline {subsubsection}{\numberline {5.5.1}chroma}{5}{subsubsection.5.5.1}%
+\contentsline {subsubsection}{\numberline {5.5.2}Sherlock}{5}{subsubsection.5.5.2}%
+\contentsline {subsubsection}{\numberline {5.5.3}HaveIBeenPwned}{6}{subsubsection.5.5.3}%
+\contentsline {subsubsection}{\numberline {5.5.4}tavily}{6}{subsubsection.5.5.4}%
+\contentsline {subsection}{\numberline {5.6}Challenges}{6}{subsection.5.6}%
+\contentsline {subsubsection}{\numberline {5.6.1}Frontend}{6}{subsubsection.5.6.1}%
+\contentsline {subsubsection}{\numberline {5.6.2}Frontend - Connection to the Backend}{7}{subsubsection.5.6.2}%
+\contentsline {subsubsection}{\numberline {5.6.3}Finding Sources and APIs}{7}{subsubsection.5.6.3}%
+\contentsline {subsubsection}{\numberline {5.6.4}Integrating Sherlock}{8}{subsubsection.5.6.4}%
+\contentsline {subsubsection}{\numberline {5.6.5}Giving the User a Score}{8}{subsubsection.5.6.5}%
+\contentsline {section}{\numberline {6}Future Plans}{8}{section.6}%
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

@@ -9,3 +9,12 @@ svelte
 
 OpenAI
     https://openai.com/brand/
+
+Chroma
+    https://www.trychroma.com/chroma-logo.png
+
+sherlock
+    https://raw.githubusercontent.com/sherlock-project/sherlock/master/docs/images/sherlock-logo.png
+
+tavily
+    https://tavily.com/_next/static/media/logo.b3d36071.svg

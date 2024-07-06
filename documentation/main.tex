@@ -144,14 +144,51 @@ The frontend was built using SvelteKit \footnote{\url{https://kit.svelte.dev/}} 
 The image below shows the internal structure of the application and the flow of information:
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=14cm]{Structure.png}
-	\caption{Draft of the frontend}
+	\includegraphics[width=14cm]{Structure200.png}
+	\caption{Structure of the application}
 	\label{fig:structure}
 \end{figure} 
 
 The user interacts with the frontend. \\
 The frontend then sends a request to the central backend API, which calls all the other APIs and tools.
 
+\subsection{Tools and APIs}
+We have decided to use a combination of different APIs and tools, the following chapters will explain the tools and their integration into the project.
+
+\subsubsection{chroma}
+we use chroma \footnote{\url{https://www.trychroma.com/}}, a verctor based database to store list of leaked passwords. These lists were obtained from the GitHub repository \hyperlink{https://github.com/00xBAD/kali-wordlists}{00xBAD/kali-wordlists} which contains a number of different lists. We decided to use the following wordlists, which contain a mix of different passwords:
+\begin{enumerate}
+	\item wifite
+	\item vnc\_passwords
+	\item unix\_passwords
+	\item sqlmap
+	\item password
+	\item keyboard-patterns
+	\item fasttrack
+	\item default\_pass\_for\_services\_unhash
+	\item common
+	\item adobe\_top100\_pass
+\end{enumerate}
+More wordlists could be added at any time and will be loaded when a new thread is created.
+
+\subsubsection{Sherlock}
+Sherlock \footnote{\url{https://github.com/sherlock-project/sherlock}} is a command line interface tool which searches for usernames across 400 social media sites and networks.
+\\ \\
+The tool has been modified to be used as an internal tool, without the need to call it via a new process.
+\\ \\
+By utilizing Sherlock, users can scan for usernames across numerous social networks, identify old accounts, detect impersonation attempts, and take appropriate action.
+
+\subsubsection{HaveIBeenPwned}
+HaveIBeenPwned \footnote{\url{https://haveibeenpwned.com/}} is an online tool which searches for a given email in data breaches and informs the user of those breaches.
+\\ \\
+''A data breach is any security incident in which unauthorized parties access sensitive or confidential information, including personal data (Social Security numbers, bank account numbers, healthcare data) and corporate data (customer records, intellectual property, financial information).''\cite{what-is-data-breach}
+\\ \\
+We use the API provided by HaveIBeenPwned to inform the user about breaches.
+
+\subsubsection{tavily}
+We also use tavily \footnote{\url{https://tavily.com/}}, an API to search the internet, which is optimized for LLMs.
+\\ \\
+We use Tavily to look up new and up-to-date information on security and privacy-related topics.
 
 \subsection{Challenges}
 The following chapters show the different challenges we faced during the development and the solutions we implemented to overcome the challenges.
@@ -179,6 +216,22 @@ Another challenge was the sourcing of information and tools to use in our applic
 We fixed the issues of local tooling by writing custom APIs for those tools, like spiderfoot \footnote{\url{https://github.com/smicallef/spiderfoot}}. Those APIs are being called by our backend.
 \\ \\
 In the end we ended up paying for the most important and useful APIs, like HaveIBeenPwned  \footnote{\url{https://haveibeenpwned.com/}}.
+
+\subsubsection{Integrating Sherlock}
+Since Sherlock is designed as a command-line interface tool, integrating it into the application was challenging.
+\\ \\
+We had to modify its code, removing most parts that control input and output, including argument parsing and scanning.
+
+\subsubsection{Giving the User a Score}
+We aimed to provide users with a score based on their level of privacy or lack thereof.  However, coming up with a formula was not possible.
+\\ \\
+One issue was the "living off the land" concept we used, relying solely on the data the user provided. We had no way of knowing if the user had given us all relevant information.
+\\ \\
+Another challenge was determining the weight of the issues found by the tools. For instance, is a breach worse than a leaked password?
+\\ \\
+Additionally, we had no way of knowing if the user had already resolved an issue. For example, there was no way to verify if a user had changed a leaked password.
+\\ \\
+Given these issues, providing the user with a score would create a false sense of security.
 
 \section{Future Plans}
 As this is the first version, we have exciting plants for future developments.
