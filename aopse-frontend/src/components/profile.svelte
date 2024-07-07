@@ -55,7 +55,7 @@
 
 <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg flex flex-col h-[calc(100vh-4rem)]">
     <header class="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white">Privacy Profile</h2>
+        <h2 class="h2 text-center">Privacy Profile</h2>
     </header>
 
     <section class="p-4 flex-grow overflow-y-auto space-y-4">
