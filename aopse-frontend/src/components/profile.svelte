@@ -154,13 +154,15 @@
                         <table class="table-auto w-full">
                             <thead>
                             <tr class="bg-gray-100 dark:bg-gray-700">
-                                <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Account</th>
+                                <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Username</th>
+                                <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Website</th>
                                 <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Link</th>
                             </tr>
                             </thead>
                             <tbody>
                             {#each getPreviewItems($accountFindings) as finding, index}
                                 <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <td class="px-4 py-2 text-gray-800 dark:text-gray-300">{finding.query}</td>
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">{finding.value}</td>
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">
                                         <a href={finding.result} target="_blank"
@@ -214,6 +216,7 @@
                         <table class="table-auto w-full">
                             <thead>
                             <tr class="bg-gray-100 dark:bg-gray-700">
+                                <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Email</th>
                                 <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Domain</th>
                                 <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Breach Date</th>
                                 <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-300">Data Classes</th>
@@ -222,6 +225,7 @@
                             <tbody>
                             {#each getPreviewItems($breachFindings) as finding}
                                 <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <td class="px-4 py-2 text-gray-800 dark:text-gray-300">{finding.query}</td>
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">{finding.value}</td>
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">{finding.breachDate}</td>
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">{finding.dataClasses.join(', ')}</td>

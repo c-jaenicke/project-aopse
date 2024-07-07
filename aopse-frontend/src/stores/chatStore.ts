@@ -41,12 +41,14 @@ export interface PasswordFinding {
 export interface AccountFinding {
     value: string;
     result: string;
+    query: string;
 }
 
 export interface BreachFinding {
     value: string;
     breachDate: string;
     dataClasses: string[];
+    query: string;
 }
 
 export const passwordFindings: Writable<PasswordFinding[]> = writable([]);
@@ -313,14 +315,14 @@ function createChatStore() {
                                 handlePasswordCheck(query, result);
                             } else if (toolName === 'account_check') {
                                 if ('result' in data.metadata && Array.isArray(data.metadata.result)) {
-                                    handleAccountCheck(data.metadata.result);
+                                    handleAccountCheck(data.metadata.result, query);
                                 }
                                 if ('progress_percentage' in data.metadata) {
                                     existingToolCall.progress_percentage = data.metadata.progress_percentage;
                                 }
                             } else if (toolName === 'check_breaches') {
                                 if ('result' in data.metadata && typeof data.metadata.result === 'string') {
-                                    handleCheckBreaches(data.metadata.result);
+                                    handleCheckBreaches(data.metadata.result, query);
                                 }
                             }
                         } else {
@@ -347,20 +349,22 @@ function createChatStore() {
         passwordFindings.update(values => [...values, finding]);
     }
 
-    function handleAccountCheck(result: any[]) {
+    function handleAccountCheck(result: any[], query: string) {
         const newFindings: AccountFinding[] = result.map(object => ({
             value: object.name,
-            result: object.url
+            result: object.url,
+            query: query
         }));
         accountFindings.update(values => [...values, ...newFindings]);
     }
 
-    function handleCheckBreaches(result: string) {
+    function handleCheckBreaches(result: string, query: string) {
         const parsedResult = JSON.parse(result);
         const newFindings: BreachFinding[] = parsedResult.map((object: CheckBreachesEntry) => ({
             value: object.Domain === '' ? object.Name : object.Domain,
             breachDate: object.BreachDate,
-            dataClasses: object.DataClasses
+            dataClasses: object.DataClasses,
+            query: query
         }));
         breachFindings.update(values => [...values, ...newFindings]);
     }

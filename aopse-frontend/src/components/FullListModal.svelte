@@ -39,9 +39,11 @@
                         <th class="px-4 py-2 text-left">Password</th>
                         <th class="px-4 py-2 text-left">Status</th>
                     {:else if type === 'account'}
-                        <th class="px-4 py-2 text-left">Account</th>
+                        <th class="px-4 py-2 text-left">Username</th>
+                        <th class="px-4 py-2 text-left">Website</th>
                         <th class="px-4 py-2 text-left">Link</th>
                     {:else if type === 'breach'}
+                        <th class="px-4 py-2 text-left">Email</th>
                         <th class="px-4 py-2 text-left">Domain</th>
                         <th class="px-4 py-2 text-left">Breach Date</th>
                         <th class="px-4 py-2 text-left">Data Classes</th>
@@ -59,6 +61,7 @@
                                     </span>
                             </td>
                         {:else if type === 'account'}
+                            <td class="px-4 py-2 bg-white dark:bg-gray-800">{item.query}</td>
                             <td class="px-4 py-2 bg-white dark:bg-gray-800">{item.value}</td>
                             <td class="px-4 py-2 bg-white dark:bg-gray-800">
                                 <a href={item.result} target="_blank" class="text-primary-500 hover:text-primary-700 hover:underline"
@@ -67,9 +70,10 @@
                                 </a>
                             </td>
                         {:else if type === 'breach'}
+                            <td class="px-4 py-2 bg-white dark:bg-gray-800">{item.query}</td>
                             <td class="px-4 py-2 bg-white dark:bg-gray-800">{item.value}</td>
                             <td class="px-4 py-2 bg-white dark:bg-gray-800">{item.breachDate}</td>
-                            <td class="px-4 py-2 bg-white dark:bg-gray-800">{item.dataClasses.join(', ')}</td>
+                            <td class="px-4 py-2 bg-white dark:bg-gray-800 text-wrap">{item.dataClasses.join(', ')}</td>
                         {/if}
                     </tr>
                 {/each}
