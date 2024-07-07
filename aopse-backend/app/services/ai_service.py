@@ -507,6 +507,11 @@ class AIService:
                     asyncio.run(self.websocket.send_text(tool_call_event.json()))
 
                 search_results = self.account_check.search(query, progress_callback)
+                output_data = {
+                    "totalAccounts": 0,
+                    "accountsIncludedInResults": 0,
+                    "accounts": []
+                }
                 try:
                     filtered_results = []
                     for account in search_results[:50]:
@@ -521,11 +526,6 @@ class AIService:
                         "accountsIncludedInResults": min(50, len(search_results)),
                         "accounts": filtered_results
                     }
-
-                    outputs.append({
-                        "tool_call_id": tool_call.id,
-                        "output": json.dumps(output_data)
-                    })
                 except json.JSONDecodeError:
                     print("Error: search_results is not a valid JSON string")
                 except TypeError:
@@ -533,6 +533,11 @@ class AIService:
                 except KeyError as e:
                     print(f"Error: Missing key in account data: {e}")
                 self.site_index = 0
+
+                outputs.append({
+                    "tool_call_id": tool_call.id,
+                    "output": json.dumps(output_data)
+                })
 
                 tool_call_complete_event = WebSocketMessage(
                     event=EventType.SERVER_TOOL_CALL,
@@ -566,6 +571,11 @@ class AIService:
                 asyncio.run(self.websocket.send_text(tool_call_event.json()))
 
                 breach_check_results = self.hibp.get_breaches(query)
+                output_data = {
+                    "totalBreaches": 0,
+                    "breachesIncludedInResults": 0,
+                    "breaches": []
+                }
                 try:
                     if isinstance(breach_check_results, str):
                         breach_check_results_json = json.loads(breach_check_results)
@@ -584,17 +594,18 @@ class AIService:
                             "breachesIncludedInResults": min(50, len(breach_check_results_json)),
                             "breaches": filtered_results
                         }
-
-                        outputs.append({
-                            "tool_call_id": tool_call.id,
-                            "output": json.dumps(output_data)
-                        })
                 except json.JSONDecodeError:
                     print("Error: breach_check_results is not a valid JSON string")
                 except TypeError:
                     print("Error: breach_check_results is neither a list nor a JSON string")
                 except KeyError as e:
                     print(f"Error: Missing key in breach data: {e}")
+
+                outputs.append({
+                    "tool_call_id": tool_call.id,
+                    "output": json.dumps(output_data)
+                })
+
                 tool_call_complete_event = WebSocketMessage(
                     event=EventType.SERVER_TOOL_CALL,
                     data=ServerResponse(
