@@ -344,7 +344,7 @@ function createChatStore() {
     function handlePasswordCheck(query: string, result: string) {
         const finding: PasswordFinding = {
             value: query,
-            result: result ? 'leaked' : 'safe'
+            result: result === "true" ? 'leaked' : 'safe'
         };
         passwordFindings.update(values => [...values, finding]);
     }
