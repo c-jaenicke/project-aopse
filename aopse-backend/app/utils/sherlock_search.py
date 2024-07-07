@@ -4,11 +4,11 @@ class SherlockSearch:
     def __init__(self):
         self.sherlockInstance = None
 
-    def search(self, query):
+    def search(self, query, progress_callback=None):
         print("searching using sherlock")
         # query custom sherlock and returns dict of:
         # { "name": "website name", "url": "url to user"}
-        results = search(query)
+        results = search(query, progress_callback)
         print(results)
         return results
 
@@ -796,6 +796,7 @@ def sherlock(
         unique_tor: bool = False,
         proxy=None,
         timeout=60,
+        progress_callback=None,
 ):
     """Run Sherlock Analysis.
 
@@ -891,6 +892,8 @@ def sherlock(
             results_site["http_status"] = ""
             results_site["response_text"] = ""
             query_notify.update(results_site["status"])
+            if progress_callback:
+                progress_callback(results_site["status"])
         else:
             # URL of user on site (if it exists)
             results_site["url_user"] = url
@@ -1096,7 +1099,8 @@ def sherlock(
             context=error_context,
         )
         query_notify.update(result)
-
+        if progress_callback:
+            progress_callback(result)
         # Save status of request
         results_site["status"] = result
 
@@ -1152,7 +1156,7 @@ def main(username):
     return found_sites
 
 
-def search(username):
+def search(username, progress_callback):
     print("calling sherlock_util main")
     sites = SitesInformation(
         os.path.join(os.path.dirname(__file__), "resources/data.json")
@@ -1166,7 +1170,8 @@ def search(username):
     results = sherlock(
         username=username,
         site_data=site_data_all,
-        query_notify=query_notify
+        query_notify=query_notify,
+        progress_callback=progress_callback
     )
 
     found_sites = []

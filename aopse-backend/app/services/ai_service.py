@@ -15,7 +15,7 @@ from app.utils.account_checker import AccountChecker
 
 from app.storage.chroma_storage import ChromaStorage
 
-from app.utils.sherlock_search import SherlockSearch
+from app.utils.sherlock_search import SherlockSearch, QueryResult
 
 
 class AIService:
@@ -34,6 +34,7 @@ class AIService:
         # self.account_checker = AccountChecker()
         self.hibp = HIBP()
         self.account_check = SherlockSearch()
+        self.site_index = 0
 
     class EventHandler(AssistantEventHandler):
         def __init__(self, callback, thread_id):
@@ -466,8 +467,30 @@ class AIService:
                 asyncio.run(self.websocket.send_text(tool_call_event.json()))
 
                 print("ai_service: calling username check with:" + query)
+
+                def progress_callback(query_result: QueryResult):
+                    self.site_index += 1
+                    progress_percentage = (self.site_index / 406) * 100
+
+                    tool_call_event = WebSocketMessage(
+                        event=EventType.SERVER_TOOL_CALL,
+                        data=ServerResponse(
+                            content=f"Tool call {tool_call.id}: Check the username '{query}'",
+                            status=AIResponseStatus.streaming,
+                            metadata={
+                                "tool_name": "account_check",
+                                "query": query,
+                                "tool_call_id": tool_call.id,
+                                "progress": f"{query_result.site_name} ({self.site_index} of 406)",
+                                "progress_percentage": f"{progress_percentage:.2f}%"
+                            }
+                        )
+                    )
+                    asyncio.run(self.websocket.send_text(tool_call_event.json()))
                 # search_results = self.account_check.search(query)
-                search_results = self.account_check.search(query)
+                search_results = self.account_check.search(query, progress_callback)
+                # finished search
+                self.site_index = 0
                 # search_results = sherlock_util.main(query)
 
                 outputs.append({
