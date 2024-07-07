@@ -98,7 +98,7 @@
     }
 </script>
 
-<div class="card bg-surface-100 dark:bg-gray-800 flex flex-col h-[calc(100vh-4rem)]">
+<div class="card bg-white dark:bg-gray-800 flex flex-col h-[calc(100vh-4rem)]">
     <header class="p-4 border-b border-surface-300 dark:border-gray-700">
         <h2 class="h2 text-center">Chat</h2>
     </header>
