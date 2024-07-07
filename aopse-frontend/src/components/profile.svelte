@@ -92,7 +92,7 @@
                         {#if $passwordFindings.length > 5}
                             <div class="flex items-center justify-center my-2">
                                 <p class="mr-2">
-                                    Showing only 5 of {$passwordFindings.length} items.
+                                    Showing 5 of {$passwordFindings.length} items.
                                 </p>
                                 <button class="text-primary-500 flex items-center justify-center"
                                         on:click|stopPropagation={() => openModal($passwordFindings, `All Password Findings`)}>
@@ -141,7 +141,7 @@
                         {#if $accountFindings.length > 5}
                             <div class="flex items-center justify-center my-2">
                                 <p class="mr-2">
-                                    Showing only 5 of {$accountFindings.length} items.
+                                    Showing 5 of {$accountFindings.length} items.
                                 </p>
                                 <button class="text-primary-500 flex items-center justify-center"
                                         on:click|stopPropagation={() => openModal($accountFindings, `All Account Findings`)}>
@@ -198,7 +198,7 @@
                         {#if $breachFindings.length > 5}
                             <div class="flex items-center justify-center my-2">
                                 <p class="mr-2">
-                                    Showing only 5 of {$breachFindings.length} items.
+                                    Showing 5 of {$breachFindings.length} items.
                                 </p>
                                 <button class="text-primary-500 flex items-center justify-center"
                                         on:click|stopPropagation={() => openModal($breachFindings, `All Breach Findings`)}>

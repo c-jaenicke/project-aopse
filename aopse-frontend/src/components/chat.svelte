@@ -13,11 +13,10 @@
     import {
         Accordion,
         AccordionItem,
-        clipboard,
-        getModalStore,
+        clipboard, getModalStore,
         type ModalSettings,
         popup,
-        type PopupSettings
+        type PopupSettings, ProgressRadial
     } from '@skeletonlabs/skeleton';
     import DOMPurify from 'dompurify';
 
@@ -169,19 +168,44 @@
             <div class="flex {message.sender === 'user' ? 'justify-end' : ''}">
                 <div class="rounded-lg p-3 max-w-[70%] {message.sender === 'user' ? 'bg-primary-500 text-white' : 'bg-surface-200 dark:bg-gray-700'} relative group">
                     {#if message.sender === 'ai' && message.toolCalls}
-                        <div class="mb-2 p-2 bg-surface-300 dark:bg-gray-600 rounded">
-                            <h4 class="text-sm font-semibold mb-1">Tool Calls:</h4>
-                            {#each message.toolCalls as toolCall (toolCall.id)}
-                                <div class="text-xs mb-1">
-                                    <span class="font-medium">{toolCall.name}:</span> {toolCall.arguments}
-                                    {#if toolCall.status}
-                                        <span class="ml-1 px-1 py-0.5 rounded text-xs {toolCall.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'}">
-                                            {toolCall.status}
-                                        </span>
-                                    {/if}
-                                </div>
-                            {/each}
-                        </div>
+                        <Accordion>
+                            <AccordionItem open>
+                                <svelte:fragment slot="lead">
+                                    <span class="font-materialSymbols text-xl">build</span>
+                                </svelte:fragment>
+                                <svelte:fragment slot="summary">Tool Calls</svelte:fragment>
+                                <svelte:fragment slot="content">
+                                    <ol class="list">
+                                        {#each message.toolCalls as toolCall, index (toolCall.id)}
+                                            <li class="mb-2 flex items-start bg-blue-50 dark:bg-gray-600 p-2 rounded">
+                                                <div class="flex items-center">
+                                                    {#if toolCall.status}
+                                                    <span class="px-2 py-1 rounded-full text-xs text-gray-300 inline-flex items-center justify-center">
+                                                        {#if toolCall.status === 'completed'}
+                                                        <span class="font-materialSymbols text-2xl leading-none mr-1">check</span>
+                                                        {:else}
+                                                        <span class="font-materialSymbols text-2xl leading-none mr-1 animate-pulse">hourglass_empty</span>
+                                                        {/if}
+                                                        {#if toolCall.progress_percentage && toolCall.progress_percentage !== '100.00%'}
+                                                          <div class="inline-flex items-center">
+                                                            <span class="text-l font-medium">{toolCall.progress_percentage}</span>
+                                                          </div>
+                                                        {/if}
+                                                    </span>
+                                                    {/if}
+                                                    <div class="flex-auto">
+                                                        <div class="flex items-center flex-wrap gap-2">
+                                                            <span class="font-medium">{toolCall.name}:</span>
+                                                            <span class="chip variant-filled-surface truncate max-w-xs">{toolCall.arguments}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        {/each}
+                                    </ol>
+                                </svelte:fragment>
+                            </AccordionItem>
+                        </Accordion>
                     {/if}
                     <div class="{message.sender === 'ai' && !message.isLoading ? 'pb-6' : ''}">
                         {#if message.sender === 'ai'}
@@ -208,6 +232,7 @@
             </div>
         {/each}
     </section>
+
 
     <footer class="p-4 border-t border-surface-300 dark:border-gray-700 mt-auto">
         <div class="input-group input-group-divider grid-cols-[1fr_auto]">

@@ -5,7 +5,6 @@ export const isThreadLoading: Writable<boolean> = writable(false);
 export const isModelUpdating: Writable<boolean> = writable(false);
 export const errorMessage: Writable<string | null> = writable(null);
 export const threadId: Writable<string> = writable('');
-export const findings: Writable<Finding[]> = writable([]);
 
 export const Models = {
     GPT_4O: 'gpt-4o',
@@ -22,6 +21,7 @@ interface ToolCall {
     name: string;
     arguments: string;
     status: 'in_progress' | 'completed';
+    progress_percentage?: string;
 }
 
 
@@ -198,7 +198,6 @@ function createChatStore() {
                 handleAIStatus(message.data as ServerResponse);
                 break;
             case EventType.SERVER_TOOL_CALL:
-                console.log('Tool call:', message.data)
                 handleToolCall(message.data as ServerResponse);
                 break;
             case EventType.SERVER_REQUIRES_ACTION:
@@ -315,6 +314,9 @@ function createChatStore() {
                             } else if (toolName === 'account_check') {
                                 if ('result' in data.metadata && Array.isArray(data.metadata.result)) {
                                     handleAccountCheck(data.metadata.result);
+                                }
+                                if ('progress_percentage' in data.metadata) {
+                                    existingToolCall.progress_percentage = data.metadata.progress_percentage;
                                 }
                             } else if (toolName === 'check_breaches') {
                                 if ('result' in data.metadata && typeof data.metadata.result === 'string') {
