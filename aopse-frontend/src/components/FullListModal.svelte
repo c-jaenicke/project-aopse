@@ -61,7 +61,7 @@
                         {:else if type === 'account'}
                             <td class="px-4 py-2 bg-white dark:bg-gray-800">{item.value}</td>
                             <td class="px-4 py-2 bg-white dark:bg-gray-800">
-                                <a href={item.result} target="_blank" class="text-blue-500 hover:underline"
+                                <a href={item.result} target="_blank" class="text-primary-500 hover:text-primary-700 hover:underline"
                                    title={item.result}>
                                     {shortenUrl(item.result)}
                                 </a>

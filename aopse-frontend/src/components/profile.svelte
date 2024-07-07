@@ -37,6 +37,20 @@
     $: leakedPasswords = $passwordFindings.filter(f => f.result === 'leaked').length;
     $: safePasswords = $passwordFindings.filter(f => f.result === 'safe').length;
     $: totalPasswords = $passwordFindings.length;
+
+    interface UserInfo {
+        firstName: string;
+        lastName: string;
+        email: string;
+        username: string;
+    }
+
+    let userInfo: UserInfo = {
+        firstName: 'Max',
+        lastName: 'Mustermann',
+        email: 'max@mustermann.com',
+        username: 'maxi123'
+    };
 </script>
 
 <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg flex flex-col h-[calc(100vh-4rem)]">
@@ -45,6 +59,25 @@
     </header>
 
     <section class="p-4 flex-grow overflow-y-auto space-y-4">
+        <div class="card p-4 bg-surface-100 dark:bg-surface-700">
+            <header class="flex items-center space-x-4 mb-4">
+                <div>
+                    <h3 class="h3">{userInfo.firstName} {userInfo.lastName}</h3>
+                    <p class="text-sm opacity-75">@{userInfo.username}</p>
+                </div>
+            </header>
+            <hr class="opacity-50 my-4"/>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="font-semibold">Email</p>
+                    <p class="opacity-75">{userInfo.email}</p>
+                </div>
+                <div>
+                    <p class="font-semibold">Username</p>
+                    <p class="opacity-75">{userInfo.username}</p>
+                </div>
+            </div>
+        </div>
         <Accordion>
             <AccordionItem>
                 <svelte:fragment slot="lead">
@@ -130,7 +163,8 @@
                                 <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">{finding.value}</td>
                                     <td class="px-4 py-2 text-gray-800 dark:text-gray-300">
-                                        <a href={finding.result} target="_blank" class="text-blue-500 hover:underline">
+                                        <a href={finding.result} target="_blank"
+                                           class="text-primary-500 hover:text-primary-700 hover:underline">
                                             {shortenUrl(finding.result)}
                                         </a>
                                     </td>
