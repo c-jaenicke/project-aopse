@@ -249,7 +249,7 @@
                                 <div class="text-center w-64">
                                     <span class="font-materialSymbols text-primary-500 mb-1 text-2xl">lock</span>
                                     <p class="text-lg font-semibold text-primary-500 mb-2">Password Leaks</p>
-                                    <p class="text-sm text-gray-400">Check the password "{placeholders.password}"?</p>
+                                    <p class="text-sm text-gray-400">Check the password "{placeholders.password}"</p>
                                 </div>
                                 <div class="text-center w-64">
                                     <span class="font-materialSymbols text-primary-500 mb-1 text-2xl">mail</span>

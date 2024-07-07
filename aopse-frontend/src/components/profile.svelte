@@ -38,19 +38,9 @@
     $: safePasswords = $passwordFindings.filter(f => f.result === 'safe').length;
     $: totalPasswords = $passwordFindings.length;
 
-    interface UserInfo {
-        firstName: string;
-        lastName: string;
-        email: string;
-        username: string;
-    }
+    $: usernamesInFindings = [...new Set($accountFindings.map(f => f.query))];
+    $: emailsInFindings = [...new Set($breachFindings.map(f => f.query))];
 
-    let userInfo: UserInfo = {
-        firstName: 'Max',
-        lastName: 'Mustermann',
-        email: 'max@mustermann.com',
-        username: 'maxi123'
-    };
 </script>
 
 <div class="card bg-white dark:bg-gray-800 shadow-md rounded-lg flex flex-col h-[calc(100vh-4rem)]">
@@ -59,22 +49,33 @@
     </header>
 
     <section class="p-4 flex-grow overflow-y-auto space-y-4">
-        <div class="card p-4 bg-surface-100 dark:bg-surface-700">
-            <header class="flex items-center space-x-4 mb-4">
+        <div class="card p-4 bg-surface-100 dark:bg-surface">
+            <h3 class="h3 mb-4">Digital Exposure</h3>
+            <hr class="opacity-50 mb-4"/>
+            <div class="space-y-6">
                 <div>
-                    <h3 class="h3">{userInfo.firstName} {userInfo.lastName}</h3>
-                    <p class="text-sm opacity-75">@{userInfo.username}</p>
+                    <h4 class="font-semibold mb-2">Usernames</h4>
+                    {#if usernamesInFindings.length > 0}
+                        <ul class="list-disc pl-5 space-y-1">
+                            {#each usernamesInFindings as username}
+                                <li class="text-gray-600 dark:text-gray-300">{username}</li>
+                            {/each}
+                        </ul>
+                    {:else}
+                        <p class="text-gray-600 dark:text-gray-300">No usernames found yet.</p>
+                    {/if}
                 </div>
-            </header>
-            <hr class="opacity-50 my-4"/>
-            <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <p class="font-semibold">Email</p>
-                    <p class="opacity-75">{userInfo.email}</p>
-                </div>
-                <div>
-                    <p class="font-semibold">Username</p>
-                    <p class="opacity-75">{userInfo.username}</p>
+                    <h4 class="font-semibold mb-2">Emails</h4>
+                    {#if emailsInFindings.length > 0}
+                        <ul class="list-disc pl-5 space-y-1">
+                            {#each emailsInFindings as email}
+                                <li class="text-gray-600 dark:text-gray-300">{email}</li>
+                            {/each}
+                        </ul>
+                    {:else}
+                        <p class="text-gray-600 dark:text-gray-300">No emails found yet.</p>
+                    {/if}
                 </div>
             </div>
         </div>
