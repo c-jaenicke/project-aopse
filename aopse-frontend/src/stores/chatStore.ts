@@ -291,10 +291,10 @@ function createChatStore() {
     }
 
     function handleToolCall(data: ServerResponse): void {
-        if (data.metadata && typeof data.metadata === 'object' && 'tool_name' in data.metadata && 'query' in data.metadata && 'tool_call_id' in data.metadata) {
-            const toolName = data.metadata.tool_name;
-            const query = data.metadata.query;
-            const toolCallId = data.metadata.tool_call_id;
+        if (data.metadata && typeof data.metadata === 'object' &&
+            'tool_name' in data.metadata && 'query' in data.metadata && 'tool_call_id' in data.metadata) {
+
+            const {tool_name: toolName, query, tool_call_id: toolCallId} = data.metadata;
 
             if (typeof toolName === 'string' && typeof query === 'string' && typeof toolCallId === 'string') {
                 chatMessages.update(messages => {
@@ -309,19 +309,19 @@ function createChatStore() {
 
                             if (toolName === 'password_check') {
                                 let result = '';
-                                if ('result' in data.metadata) {
-                                    result = data.metadata.result;
+                                if (data.metadata && 'result' in data.metadata) {
+                                    result = String(data.metadata.result);
                                 }
                                 handlePasswordCheck(query, result);
                             } else if (toolName === 'account_check') {
-                                if ('result' in data.metadata && Array.isArray(data.metadata.result)) {
+                                if (data.metadata && 'result' in data.metadata && Array.isArray(data.metadata.result)) {
                                     handleAccountCheck(data.metadata.result, query);
                                 }
-                                if ('progress_percentage' in data.metadata) {
-                                    existingToolCall.progress_percentage = data.metadata.progress_percentage;
+                                if (data.metadata && 'progress_percentage' in data.metadata) {
+                                    existingToolCall.progress_percentage = String(data.metadata.progress_percentage);
                                 }
                             } else if (toolName === 'check_breaches') {
-                                if ('result' in data.metadata && typeof data.metadata.result === 'string') {
+                                if (data.metadata && 'result' in data.metadata && typeof data.metadata.result === 'string') {
                                     handleCheckBreaches(data.metadata.result, query);
                                 }
                             }
