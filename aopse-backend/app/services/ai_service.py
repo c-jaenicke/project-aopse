@@ -440,9 +440,14 @@ class AIService:
                 print("ai_service: calling password check with" + query)
                 search_results = self.chromadb.search(query)
 
+                output_data = {
+                    "password": query,
+                    "isInDatabase": search_results
+                }
+
                 outputs.append({
                     "tool_call_id": tool_call.id,
-                    "output": json.dumps(search_results)
+                    "output": json.dumps(output_data)
                 })
 
                 tool_call_complete_event = WebSocketMessage(
