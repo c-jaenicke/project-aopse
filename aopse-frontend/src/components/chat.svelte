@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {afterUpdate, onMount} from 'svelte';
+    import {afterUpdate, onDestroy, onMount} from 'svelte';
     import {
         chatStore,
         currentModel,
@@ -29,8 +29,73 @@
         messageContainer?.scrollTo({top: messageContainer.scrollHeight, behavior: 'smooth'});
     }
 
-    onMount(scrollToBottom);
+    let placeholders = {
+        username: '',
+        password: '',
+        email: '',
+        topic: ''
+    };
+
+    const usernames = [
+        'johndoe123',
+        'alice_smith',
+        'tech_guru99',
+        'security_pro',
+        'NotAHacker42',
+        'AdminForReal',
+    ];
+
+    const emails = [
+        'example@email.com',
+        'user@domain.com',
+        'securityalert@company.com',
+        'privacy@org.net',
+        'password.is.password@yahoo.com',
+        'ceo@totally-legit-business.com',
+        'hackerman@l33t.net'
+    ];
+
+    const topics = [
+        'cybersecurity',
+        'data breaches',
+        'password strength',
+        'two-factor authentication',
+        'teaching your cat to spot phishing emails',
+        'why 123456 is still a popular password',
+        'securing your Silk Road from digital highwaymen',
+    ];
+
+    const passwords = [
+        'Str0ngP@ssw0rd!',
+        'qwerty123',
+        'hunter2',
+        '2FA_Enabled_2023',
+        'correct.horse.battery.staple',
+        'iloveyou3000',
+        'password123!',
+    ];
+
+    let interval: number;
+
+    function updatePlaceholders() {
+        placeholders = {
+            username: usernames[Math.floor(Math.random() * usernames.length)],
+            password: passwords[Math.floor(Math.random() * passwords.length)],
+            email: emails[Math.floor(Math.random() * emails.length)],
+            topic: topics[Math.floor(Math.random() * topics.length)]
+        };
+    }
+
+    onMount(() => {
+        scrollToBottom();
+        updatePlaceholders();
+        interval = setInterval(updatePlaceholders, 15000);
+    });
     afterUpdate(scrollToBottom);
+
+    onDestroy(() => {
+        clearInterval(interval);
+    });
 
     function handleSendMessage() {
         if (!$isResponseLoading) {
@@ -63,12 +128,12 @@
         }
     }
 
+
     const copyPopup: PopupSettings = {
         event: 'click',
         target: 'copyPopup',
         placement: 'top'
     };
-
 
     function formatMessage(text: string): string {
         const encodedText = text
@@ -165,6 +230,43 @@
     </Accordion>
 
     <section bind:this={messageContainer} class="flex-grow overflow-y-auto p-4 space-y-4 h-full">
+        {#if $chatStore.length === 0}
+            <div class="flex flex-col items-center justify-center h-full">
+                <div class="flex items-center mb-6">
+                    <span class="font-materialSymbols text-primary-500 text-3xl mr-2">chat</span>
+                    <h2 class="text-2xl font-bold text-primary-500">Start chatting</h2>
+                </div>
+                <p class="text-lg text-gray-400 mb-8">Try asking about</p>
+                <div class="relative overflow-hidden w-full">
+                    <div class="animate-scroll-text inline-flex" style="--scroll-time: 20s;">
+                        {#each Array(2) as _}
+                            <div class="flex gap-6 px-3">
+                                <div class="text-center w-64">
+                                    <span class="font-materialSymbols text-primary-500 mb-1 text-2xl">account_circle</span>
+                                    <p class="text-lg font-semibold text-primary-500 mb-2">Accounts</p>
+                                    <p class="text-sm text-gray-400">Check the username "{placeholders.username}"</p>
+                                </div>
+                                <div class="text-center w-64">
+                                    <span class="font-materialSymbols text-primary-500 mb-1 text-2xl">lock</span>
+                                    <p class="text-lg font-semibold text-primary-500 mb-2">Password Leaks</p>
+                                    <p class="text-sm text-gray-400">Check the password "{placeholders.password}"?</p>
+                                </div>
+                                <div class="text-center w-64">
+                                    <span class="font-materialSymbols text-primary-500 mb-1 text-2xl">mail</span>
+                                    <p class="text-lg font-semibold text-primary-500 mb-2">Data Breaches</p>
+                                    <p class="text-sm text-gray-400">Is {placeholders.email} in a breach?</p>
+                                </div>
+                                <div class="text-center w-64">
+                                    <span class="font-materialSymbols text-primary-500 mb-1 text-2xl">search</span>
+                                    <p class="text-lg font-semibold text-primary-500 mb-2">Security News</p>
+                                    <p class="text-sm text-gray-400">Latest on {placeholders.topic}?</p>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+        {/if}
         {#each $chatStore as message, index}
             <div class="flex {message.sender === 'user' ? 'justify-end' : ''}">
                 <div class="rounded-lg p-3 max-w-[70%] {message.sender === 'user' ? 'bg-primary-500 text-white' : 'bg-surface-200 dark:bg-gray-700'} relative group">
