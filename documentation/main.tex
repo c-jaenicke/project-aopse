@@ -15,6 +15,7 @@
 
 \usepackage{multirow}
 \usepackage{float}
+\usepackage{svg}
 
 \usepackage{listings}
 \lstset{basicstyle=\ttfamily\footnotesize,breaklines=true}
@@ -23,7 +24,7 @@
 
 \pagestyle{fancy}
 \lhead{A. Tippe, C. N. Jänicke, I. Bingöl}
-\rhead{\includegraphics[height=10mm]{S04_HTW_Berlin_Logo_pos_FARBIG_RGB.jpg}}
+\rhead{\includesvg[height=10mm]{logo.svg}}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.6pt}
 \renewcommand{\footrulewidth}{0.6pt}
@@ -32,7 +33,7 @@
 
 \begin{titlepage}
     \begin{center}
-        \includegraphics[height=25mm]{S04_HTW_Berlin_Logo_pos_FARBIG_RGB.jpg} \\
+        \includesvg[height=30mm]{logo.svg} \\
         \vspace{1.0cm}
 
         Unternehmenssoftware Summersemester 2024
@@ -71,6 +72,13 @@ The code of the application and the documentation can be found in the GitHub rep
 
 \subsection{Project AOPSE}
 This project is called \textit{Project AOPSE}, which stands for \textit{AI-Driven OSINT People Search Engine}.
+
+\begin{figure}[H]
+	\centering
+	\includesvg[width=4cm]{logo.svg}
+	\caption{Logo of the project}
+	\label{fig:logo}
+\end{figure} 
 
 \section{Idea}
 In todays digital age, online privacy is more critical than ever, as personal information is constantly at risk of being exposed, stolen, or misused.
@@ -113,7 +121,7 @@ The following use cases have been identified:
 The following concepts and paradigms are being used.
 
 \subsection{OSINT}
-Open Source Intelligence (OSINT) is intelligence produced by collecting and analyzing  publicly available informationen \cite{what-is-osint}. Using manual research or automated tools.
+Open Source Intelligence (OSINT) is intelligence produced by collecting and analyzing  publicly available information \cite{what-is-osint}. Using manual research or automated tools.
 \\ \\
 The project leverages OSINT and automated OSINT tools to find information about the user.
 
@@ -128,7 +136,7 @@ Living off the Land (LOTL) is a technique employed by cybercriminals during malw
 The application employs this concept by working solely with the data provided by the user. This ensures that it does not seek out loosely connected information, thereby avoiding the risk of compromising other individuals and their data or inadvertently encouraging searches for unrelated individuals.
 
 \subsection{Running Locally}
-For the maximum amount of privacy and security the project has been made open-source and with the possilibity of running it locally on any machine in mind. 
+For the maximum amount of privacy and security the project has been made open-source and with the possibility of running it locally on any machine in mind. 
 
 \section{Development}
 The following sections will describe the development, the applications and frameworks we used an the challenges we faced.
@@ -247,6 +255,60 @@ The following prompts, or prompts similar to these, will execute a specific tool
 	\item \lstinline[breaklines]|is there any new information on <topic>|: will check for new information or news on the topic
 \end{itemize}
 In addition to those prompts, any prompt will lead to a result based on the previous messages and context provided.
+
+\section{Results}
+The following chapters will show and describe the results we achieved during this stage of development.
+
+The following image shows a screenshot of our frontend:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=15cm]{Frontend-final.png}
+	\caption{Screenshot of the frontend}
+	\label{fig:frondent-final}
+\end{figure}
+On the left side of the screen is the profile of the user. Including general information about them and all results of queries. At the beginning of a thread all the results are empty and get filled in as you interact with the application.
+\\ \\
+On the right side is the chat. Here the user inputs information and performs queries. Above the chat you have the option to create a new thread or switch the model at any time. This menu is collapsible.
+\\ \\
+At the top there is a navigation bar, with which you can navigate the website and get to other sites. This includes a popup to help you and an about page. In addition to that a switcher between light and dark mode.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=13cm]{Frontend-help-modal.png}
+	\caption{Screenshot of the help modal}
+	\label{fig:frondent-help-modal}
+\end{figure}
+The following image shows the check of a password, initiated by the user. The user initiates the query with a prompt. The tool run and the resuts are shown in the chat, and in the profile on the left side with the status of the password.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=15cm]{Frontend-password-check.png}
+	\caption{Screenshot of a password query}
+	\label{fig:frondent-password-check}
+\end{figure}
+This also happens when the user queries a username or an email address. The user recieves a feedback in the chat and an overview of the results in the profile. Which can be enlarged for the accounts and breaches.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=15cm]{Frontend-username.png}
+	\caption{Screenshot of a username query}
+	\label{fig:frondent-username}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=15cm]{Frontend-findings-usernames.png}
+	\caption{Screenshot of the overview of username findings}
+	\label{fig:frondent-findings-username}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=15cm]{Frontend-breaches.png}
+	\caption{Screenshot of a breach query}
+	\label{fig:frondent-breaches}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=15cm]{Frontend-breaches-overview.png}
+	\caption{Screenshot of the overview over all breaches}
+	\label{fig:frondent-breaches-overview}
+\end{figure}
 
 \section{Future Plans}
 As this is the first version, we have exciting plants for future developments.
