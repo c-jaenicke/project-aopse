@@ -13,25 +13,25 @@
 	import type {ModalSettings} from "@skeletonlabs/skeleton";
 	import {chatStore, isThreadLoading} from "../stores/chatStore.js";
 	import FullListModal from "../components/FullListModal.svelte";
+	import HelpModalContent from "../components/HelpModalContent.svelte";
 
 	initializeStores()
 
 	const modalStore = getModalStore();
 	function openHelpModal() {
 		const modal: ModalSettings = {
-			type: 'alert',
+			type: 'component',
+			component: 'helpModalContent',
 			title: 'Help',
-			body: 'The following prompts, or prompts similar to these, will execute a specific tool:\n' +
-					'<strong class="font-bold"> check the username "username"</strong>will start a search for the username on different social media networks.\n' +
-					'<strong class="font-bold"> check the password "password"</strong>will check if the password is present in one of the wordlists and give advice.\n' +
-					'<strong class="font-bold"> has the email "email address" been breached</strong>will check if the given email address has been found in any breaches.\n' +
-					'<strong class="font-bold"> is there any new information on "topic"</strong>will check for new information or news on the topic.'
+			buttonTextCancel: 'Close',
+			modalClasses: 'w-modal-wide',
 		};
 		modalStore.trigger(modal);
 	}
 
     const modalComponentRegistry = {
-        fullListModal: { ref: FullListModal }
+        fullListModal: { ref: FullListModal },
+		helpModalContent: { ref: HelpModalContent }
     };
 </script>
 
