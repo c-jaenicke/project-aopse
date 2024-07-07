@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime
 
 from fastapi import WebSocket
 from openai import OpenAI
@@ -9,13 +10,10 @@ from openai.types.beta.threads.runs import ToolCall, ToolCallDelta
 
 from app.config import ConfigSingleton
 from app.models import WebSocketMessage, EventType, ServerResponse, AIResponseStatus, AIRunStatus
-from app.utils.hibp import HIBP
-from app.utils.tavily import TavilySearch
-from app.utils.account_checker import AccountChecker
-
 from app.storage.chroma_storage import ChromaStorage
-
+from app.utils.hibp import HIBP
 from app.utils.sherlock_search import SherlockSearch, QueryResult
+from app.utils.tavily import TavilySearch
 
 
 class AIService:
@@ -30,8 +28,6 @@ class AIService:
         self.check_assistant_exists()
         self.tavily_search = TavilySearch()
         self.chromadb = ChromaStorage()
-        # accoutn checker has been replaced by sherlock
-        # self.account_checker = AccountChecker()
         self.hibp = HIBP()
         self.account_check = SherlockSearch()
         self.site_index = 0
@@ -95,10 +91,17 @@ class AIService:
         )
 
         try:
+            current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with self.client.beta.threads.runs.create_and_stream(
                     thread_id=thread_id,
                     assistant_id=self.assistant_id,
-                    event_handler=self.EventHandler(self.text_callback, thread_id)
+                    event_handler=self.EventHandler(self.text_callback, thread_id),
+                    additional_instructions=(
+                            f"It is currently {current_datetime}. "
+                            f"When responding to the user, assume this is the current date and time. "
+                            f"If the user asks about the current time, date, or anything related to the present moment,"
+                            f" use this provided datetime as the frame of reference."
+                    )
             ) as stream:
                 stream.until_done()
 
@@ -241,7 +244,16 @@ class AIService:
                                 and easy to understand - Tailored to the user's specific situation and needs - 
                                 Focused on practical solutions and actionable advice - Encouraging and supportive, 
                                 helping users feel empowered to take control of their online privacy and security
-
+                                
+                                The information you retrieve using account_check, password_check and check_breaches 
+                                will be visible to the user on the left side panel of the interface. This 
+                                conversation takes place on the right side panel. While the account_check and 
+                                check_breaches functions may return a truncated list in the conversation if there are 
+                                many matches (maximum 50 results shown), the complete unabridged list of all results 
+                                can always be found by the user on the left hand panel. Make sure to remind the user 
+                                they can see the full details there if you aren't able to include everything in your 
+                                response.
+                                
                                 Remember, your goal is to be a trusted resource for users seeking to safeguard their 
                                 digital presence. Always prioritize their privacy, security, and well-being in your 
                                 interactions.""",
@@ -301,7 +313,8 @@ class AIService:
                         "type": "function",
                         "function": {
                             "name": "check_breaches",
-                            "description": "Check if an email has been involved in data breaches using Have I Been Pwned",
+                            "description": "Check if an email has been involved in data breaches using Have I Been "
+                                           "Pwned",
                             "parameters": {
                                 "type": "object",
                                 "properties": {
@@ -487,16 +500,34 @@ class AIService:
                         )
                     )
                     asyncio.run(self.websocket.send_text(tool_call_event.json()))
-                # search_results = self.account_check.search(query)
-                search_results = self.account_check.search(query, progress_callback)
-                # finished search
-                self.site_index = 0
-                # search_results = sherlock_util.main(query)
 
-                outputs.append({
-                    "tool_call_id": tool_call.id,
-                    "output": json.dumps(search_results)
-                })
+                search_results = self.account_check.search(query, progress_callback)
+                try:
+                    filtered_results = []
+                    for account in search_results[:50]:
+                        filtered_account = {
+                            "name": account["name"],
+                            "url": account["url"],
+                        }
+                        filtered_results.append(filtered_account)
+
+                    output_data = {
+                        "totalAccounts": len(search_results),
+                        "accountsIncludedInResults": min(50, len(search_results)),
+                        "accounts": filtered_results
+                    }
+
+                    outputs.append({
+                        "tool_call_id": tool_call.id,
+                        "output": json.dumps(output_data)
+                    })
+                except json.JSONDecodeError:
+                    print("Error: search_results is not a valid JSON string")
+                except TypeError:
+                    print("Error: search_results is neither a list nor a JSON string")
+                except KeyError as e:
+                    print(f"Error: Missing key in account data: {e}")
+                self.site_index = 0
 
                 tool_call_complete_event = WebSocketMessage(
                     event=EventType.SERVER_TOOL_CALL,
@@ -530,12 +561,35 @@ class AIService:
                 asyncio.run(self.websocket.send_text(tool_call_event.json()))
 
                 breach_check_results = self.hibp.get_breaches(query)
+                try:
+                    if isinstance(breach_check_results, str):
+                        breach_check_results_json = json.loads(breach_check_results)
+                        filtered_results = []
+                        for breach in breach_check_results_json[:50]:
+                            filtered_breach = {
+                                "Name": breach["Name"],
+                                "Title": breach["Title"],
+                                "Domain": breach["Domain"],
+                                "BreachDate": breach["BreachDate"],
+                            }
+                            filtered_results.append(filtered_breach)
 
-                outputs.append({
-                    "tool_call_id": tool_call.id,
-                    "output": json.dumps(breach_check_results)
-                })
+                        output_data = {
+                            "totalBreaches": len(breach_check_results_json),
+                            "breachesIncludedInResults": min(50, len(breach_check_results_json)),
+                            "breaches": filtered_results
+                        }
 
+                        outputs.append({
+                            "tool_call_id": tool_call.id,
+                            "output": json.dumps(output_data)
+                        })
+                except json.JSONDecodeError:
+                    print("Error: breach_check_results is not a valid JSON string")
+                except TypeError:
+                    print("Error: breach_check_results is neither a list nor a JSON string")
+                except KeyError as e:
+                    print(f"Error: Missing key in breach data: {e}")
                 tool_call_complete_event = WebSocketMessage(
                     event=EventType.SERVER_TOOL_CALL,
                     data=ServerResponse(

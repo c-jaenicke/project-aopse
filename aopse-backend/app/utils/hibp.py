@@ -15,5 +15,4 @@ class HIBP:
         self.hibp = hibpwned.Pwned(email, agent="AOPSE", key=self.config.aopse.tools["hibp"].api_key)
         breaches = self.hibp.search_all_breaches()
         json_breaches = json.dumps(breaches)
-        print(json_breaches)
         return json_breaches
