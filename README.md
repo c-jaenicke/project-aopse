@@ -20,6 +20,43 @@ strategies to safeguard their personal data.
 This proactive approach not only helps in mitigating potential risks but also empowers
 users to take control of their online presence and protect their information
 
+## Project Structure
+
+The project is divided into two main parts: the frontend and the backend.
+- The frontend is a Svelte application that communicates with the backend using a WebSocket connection.
+- The backend is a FastAPI application that communicates with the frontend and various services.
+
+### Backend Structure
+
+The `app` directory contains the main application code, including:
+
+- `main.py`: The main FastAPI application
+- `models.py`: Pydantic models used for request and response validation
+- `config.py`: Configuration file that loads settings from `config.yaml`
+
+#### Routes
+- `routes/`
+  - `websocket.py`: Contains the WebSocket route
+
+#### Services
+- `services/`
+  - `ai_service.py`: The core of the backend, containing most of the application logic
+
+#### Storage
+- `storage/`
+  - `chroma_storage.py`: Manages data storage and retrieval from the Chroma database
+
+#### Utils
+- `utils/`
+  - `account_checker.py`: Uses Sherlock to check for account existence across various platforms
+  - `hibp.py`: Interfaces with the HaveIBeenPwned API to check for compromised emails
+  - `tavily_search.py`: Implements internet search functionality using the Tavily API
+  - `sherlock_search.py`: Sherlock implementation for username searches
+
+#### Wordlists
+- `wordlists/`: Contains wordlists stored in the Chroma database
+
+
 ## Setup
 
 The backend requires that you correctly fill out the [`config.yaml`](./aopse-backend/config.yaml) in the `aopse-backend`
