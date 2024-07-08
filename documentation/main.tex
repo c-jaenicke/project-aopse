@@ -142,8 +142,8 @@ For the maximum amount of privacy and security the project has been made open-so
 The following sections will describe the development, the applications and frameworks we used an the challenges we faced.
 
 \subsection{OpenAI or Open-Source}
-We decided to use the OpenAI model \textit{GPT-3.5 Turbo} \footnote{\url{https://platform.openai.com/docs/models/gpt-3-5-turbo}}. Our testing has shown that this model produces the most accurate information related to privacy and security compared to open-source models.\\
-In addition to that its relativly cheap and easy to use.
+We opted to use OpenAI's model \textit{GPT-3.5 Turbo} \footnote{\url{https://platform.openai.com/docs/models/gpt-3-5-turbo}} as our primary language model. Our testing demonstrated that this model produces very accurate information related to privacy and security, outperforming many open-source alternatives we evaluated, such as \textit{Llama 3} and \textit{Phi-3 Mini}.\\
+On top of that, it is relatively cheap and easy to use.
 
 \subsection{Backend}
 The backend was developed using Python \footnote{\url{https://www.python.org/}}. We used the FastAPI \footnote{\url{https://fastapi.tiangolo.com/}} framework to build the backend and used the Official OpenAI Python library to call the model \footnote{\url{https://github.com/openai/openai-python}}.
@@ -167,7 +167,7 @@ The frontend then sends a request to the central backend API, which calls all th
 We have decided to use a combination of different APIs and tools, the following chapters will explain the tools and their integration into the project.
 
 \subsubsection{chroma}
-we use chroma \footnote{\url{https://www.trychroma.com/}}, a verctor based database to store list of leaked passwords. These lists were obtained from the GitHub repository \hyperlink{https://github.com/00xBAD/kali-wordlists}{00xBAD/kali-wordlists} which contains a number of different lists. We decided to use the following wordlists, which contain a mix of different passwords:
+We use Chroma \footnote{\url{https://www.trychroma.com/}}, an open-source vector database, to store lists of leaked passwords. These password lists were obtained from the GitHub repository \hyperlink{https://github.com/00xBAD/kali-wordlists}{00xBAD/kali-wordlists} which contains a number of different lists. We decided to use the following wordlists, which contain a mix of different passwords:
 \begin{enumerate}
 	\item wifite
 	\item vnc\_passwords
@@ -202,10 +202,10 @@ We also use tavily \footnote{\url{https://tavily.com/}}, an API to search the in
 We use Tavily to look up new and up-to-date information on security and privacy-related topics.
 
 \subsection{Challenges}
-The following chapters show the different challenges we faced during the development and the solutions we implemented to overcome the challenges.
+The following chapters describe the various challenges we faced during development and the solutions we implemented to overcome them.
 
 \subsubsection{Frontend}
-One of the first challenges was the frontend. We had specific requirements and ideas to show the user the output of the application, to summarize it, and to get the user input in an intuitive way.
+One of the first challenges was the frontend. We had specific requirements and ideas about how to show the user the output of the application, how to summarize it, and how to get the user input in an intuitive way.
 \\ \\
 The goal was to show all the output on the left and have a chat on the right side, as shown in the following image:
 \begin{figure}[H]
@@ -214,24 +214,24 @@ The goal was to show all the output on the left and have a chat on the right sid
 	\caption{Draft of the frontend}
 	\label{fig:draft-frontend}
 \end{figure} 
-None of the publicly available frontend libraries provided a solution to our requirements. To resolve this we created our own frontend using SvelteKit.
+After reviewing various public frontend libraries, we found that none of them fully met our specific needs. As a result, we decided to build our own custom frontend solution using SvelteKit.
 
 \subsubsection{Frontend - Connection to the Backend}
-By building our own frontend, we faced the challenge of transporting information from the frontend to the backend, and back again. The first attempt, using a simple API on both sides failed.
+Creating our own frontend brought new challenges, particularly in establishing smooth communication between the frontend and backend. Our initial approach of using a basic API on both ends didn't work as expected.
 \\ \\
-We then transitioned to websockets, which allow the streaming of data to a listener. By doing so the frontend can send messages whenever and then listens to the response of the backend. This solved timeouts and other issues.
+We then shifted to websockets, which allow data to be streamed to a listener. This allows the frontend to send messages whenever needed and then listen to the response from the backend. This solved timeouts and other problems.
 
 \subsubsection{Finding Sources and APIs}
-Another challenge was the sourcing of information and tools to use in our application. While APIs and sources exist on the internet, most of them were behind a paywall or only available as tools to run locally.
+Another challenge was finding information and tools to use in our application. While APIs and sources are available on the web, most were behind a paywall or only available as tools to run locally.
 \\ \\
-We fixed the issues of local tooling by writing custom APIs for those tools, like spiderfoot \footnote{\url{https://github.com/smicallef/spiderfoot}}. Those APIs are being called by our backend.
+We considered addressing the limitations of local tools by developing custom APIs for them, such as for SpiderFoot\footnote{\url{https://github.com/smicallef/spiderfoot}}. Our plan was to have these APIs called by our backend. However, due to time constraints, we ultimately couldn't implement this solution. Instead, we had to explore alternative approaches to meet our information sourcing needs within the project timeline.
 \\ \\
-In the end we ended up paying for the most important and useful APIs, like HaveIBeenPwned  \footnote{\url{https://haveibeenpwned.com/}}.
+After careful consideration of our options and budget constraints, we ultimately decided to invest in a paid subscription to a single, critical API. We decided to go with the Have I Been Pwned service\footnote{\url{https://haveibeenpwned.com/}}.
 
 \subsubsection{Integrating Sherlock}
-Since Sherlock is designed as a command-line interface tool, integrating it into the application was challenging.
+Integrating Sherlock, a command line interface tool, was a challenging task.
 \\ \\
-We had to modify its code, removing most parts that control input and output, including argument parsing and scanning.
+We had to modify its code, removing most of the parts that control input and output, including argument parsing and scanning.
 
 \subsubsection{Giving the User a Score}
 We aimed to provide users with a score based on their level of privacy or lack thereof.  However, coming up with a formula was not possible.
@@ -244,8 +244,20 @@ Additionally, we had no way of knowing if the user had already resolved an issue
 \\ \\
 Given these issues, providing the user with a score would create a false sense of security.
 
+\subsubsection{System Prompt}
+Adapting the instructions for the model proved to be a challenging aspect of our development process. Our first iteration included providing the current time and date in the format "this message was received at [timestamp]". However, this approach didn't consistently yield the desired results. For instance, when asked "What time is it?", the model would respond: \\ \\
+"I don't have real-time capabilities to provide the current time. If you have any other questions or need assistance with something else, feel free to ask!" \\ \\
+This response indicated that the model wasn't effectively utilizing the provided timestamp information.
+\\ \\
+To address this issue, we employed prompt engineering techniques \footnote{\url{https:/www.promptingguide.ai/}} to refine our approach. We updated the system prompt to be more explicit and directive: \\ \\
+"When responding to the user, assume this is the current date and time. If the user asks about the current time, date, or anything related to the present moment, use this provided datetime as the frame of reference."
+\\ \\
+This revised prompt yielded significantly improved results. When asked the same question, the model now responds appropriately: "It is currently 11:07 AM on June 1, 2024."
+\\
+By applying these lessons, we were able to create a more effective system prompt. The specific instructions for this improved prompt can be found in the \texttt{ai\_service.py} file.
+
 \section{Using Project AOPSE}
-The project can be run locally. The setup is described in the readme.md in the GitHub repository of the project on \hyperlink{https://github.com/c-jaenicke/project-aopse}{c-jaenicke/project-aopse}.
+The project can be run locally. The setup is described in the README.md in the GitHub repository of the project on \hyperlink{https://github.com/c-jaenicke/project-aopse}{c-jaenicke/project-aopse}.
 \\ \\
 The following prompts, or prompts similar to these, will execute a specific tool:
 \begin{itemize}
@@ -312,13 +324,14 @@ In addition to the overview of the information, the usernames and breaches can b
 \end{figure}
 
 \section{Future Plans}
-As this is the first version, we have exciting plants for future developments.
-\\ \\
-This includes the development of a custom AI-model, as to not rely on OpenAI. 
-Improving the performance of the backend. Possibly a full rewrite in a more advanced and safe language, like Rust \footnote{\url{https://www.rust-lang.org/}}. 
-While also improving the security further. 
-Implementing more tools and sources of information. 
-And adding customizable search parameters.
+As this is the first version, we have exciting plans for future developments:
+\begin{itemize}
+  \item We aim to reduce our dependency on OpenAI by creating our own AI model tailored to our specific needs.
+  \item We're exploring ways to improve the efficiency and speed of our backend processes. This may involve a complete rewrite of the backend using a more advanced, secure, and highly performant programming language such as Rust \footnote{\url{https://www.rust-lang.org/}}.
+  \item We intend to incorporate more tools and information sources to provide more comprehensive information.
+  \item We are considering the implementation of adjustable search parameters, which would allow users to fine-tune their queries for more precise results.
+\end{itemize}
+
 
 % Referenzen bitte in references.bib einfügen
 \newpage
